@@ -1,0 +1,61 @@
+Running `(cd /Users/anastasiya.krupinina/.pub-cache/hosted/pub.dev/objective_c-9.3.0/; TMPDIR=/var/folders/58/mw0x4c651030ykjvwp3w4zz8n2lh3m/T/ PATH=/Users/anastasiya.krupinina/Documents/flutter/bin/:/Users/anastasiya.krupinina/Documents/flutter/bin:/opt/homebrew/bin:/opt/homebrew/sbin:/usr/local/bin:/System/Cryptexes/App/usr/bin:/usr/bin:/bin:/usr/sbin:/sbin:/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/local/bin:/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/bin:/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/appleinternal/bin:/Library/Apple/usr/bin:/Users/anastasiya.krupinina/Documents/flutter/bin/:/Users/anastasiya.krupinina/Documents/flutter/bin HOME=/Users/anastasiya.krupinina /Users/anastasiya.krupinina/Documents/flutter/bin/cache/dart-sdk/bin/dart --packages=/Users/anastasiya.krupinina/Uni/home_wine/.dart_tool/package_config.json /Users/anastasiya.krupinina/Uni/home_wine/.dart_tool/hooks_runner/objective_c/5f31b8d621/hook.dill --config=/Users/anastasiya.krupinina/Uni/home_wine/.dart_tool/hooks_runner/objective_c/5f31b8d621/input.json )`.
+INFO: 2026-05-11 18:25:24.947501: Running `/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang --version`.
+
+INFO: 2026-05-11 18:25:24.961708: Running `/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang --version`.
+
+INFO: 2026-05-11 18:25:24.973478: Running: /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.5.sdk -target x86_64-apple-darwin -mmacos-version-min=13 -c /Users/anastasiya.krupinina/.pub-cache/hosted/pub.dev/objective_c-9.3.0/src/include/dart_api_dl.c -fpic -I src -o /Users/anastasiya.krupinina/Uni/home_wine/.dart_tool/hooks_runner/shared/objective_c/build/5f31b8d621/obj/src/include/dart_api_dl.c.o
+
+INFO: 2026-05-11 18:25:24.974127: Running: /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.5.sdk -target x86_64-apple-darwin -mmacos-version-min=13 -x objective-c -fobjc-arc -c /Users/anastasiya.krupinina/.pub-cache/hosted/pub.dev/objective_c-9.3.0/src/objective_c.m -fpic -I src -o /Users/anastasiya.krupinina/Uni/home_wine/.dart_tool/hooks_runner/shared/objective_c/build/5f31b8d621/obj/src/objective_c.m.o
+
+INFO: 2026-05-11 18:25:24.973778: Running: /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.5.sdk -target x86_64-apple-darwin -mmacos-version-min=13 -c /Users/anastasiya.krupinina/.pub-cache/hosted/pub.dev/objective_c-9.3.0/src/objective_c.c -fpic -I src -o /Users/anastasiya.krupinina/Uni/home_wine/.dart_tool/hooks_runner/shared/objective_c/build/5f31b8d621/obj/src/objective_c.c.o
+INFO: 2026-05-11 18:25:24.973946: Running: /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.5.sdk -target x86_64-apple-darwin -mmacos-version-min=13 -c /Users/anastasiya.krupinina/.pub-cache/hosted/pub.dev/objective_c-9.3.0/test/util.c -fpic -I src -o /Users/anastasiya.krupinina/Uni/home_wine/.dart_tool/hooks_runner/shared/objective_c/build/5f31b8d621/obj/test/util.c.o
+INFO: 2026-05-11 18:25:24.974041: Running: /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.5.sdk -target x86_64-apple-darwin -mmacos-version-min=13 -x objective-c -fobjc-arc -c /Users/anastasiya.krupinina/.pub-cache/hosted/pub.dev/objective_c-9.3.0/src/input_stream_adapter.m -fpic -I src -o /Users/anastasiya.krupinina/Uni/home_wine/.dart_tool/hooks_runner/shared/objective_c/build/5f31b8d621/obj/src/input_stream_adapter.m.o
+
+INFO: 2026-05-11 18:25:24.974339: Running: /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.5.sdk -target x86_64-apple-darwin -mmacos-version-min=13 -x objective-c -fobjc-arc -c /Users/anastasiya.krupinina/.pub-cache/hosted/pub.dev/objective_c-9.3.0/src/observer.m -fpic -I src -o /Users/anastasiya.krupinina/Uni/home_wine/.dart_tool/hooks_runner/shared/objective_c/build/5f31b8d621/obj/src/observer.m.o
+
+INFO: 2026-05-11 18:25:24.974554: Running: /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.5.sdk -target x86_64-apple-darwin -mmacos-version-min=13 -x objective-c -fobjc-arc -c /Users/anastasiya.krupinina/.pub-cache/hosted/pub.dev/objective_c-9.3.0/src/protocol.m -fpic -I src -o /Users/anastasiya.krupinina/Uni/home_wine/.dart_tool/hooks_runner/shared/objective_c/build/5f31b8d621/obj/src/protocol.m.o
+
+INFO: 2026-05-11 18:25:24.974677: Running: /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.5.sdk -target x86_64-apple-darwin -mmacos-version-min=13 -x objective-c -fobjc-arc -c /Users/anastasiya.krupinina/.pub-cache/hosted/pub.dev/objective_c-9.3.0/src/objective_c_bindings_generated.m -fpic -I src -o /Users/anastasiya.krupinina/Uni/home_wine/.dart_tool/hooks_runner/shared/objective_c/build/5f31b8d621/obj/src/objective_c_bindings_generated.m.o
+
+INFO: 2026-05-11 18:25:24.974460: Running: /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.5.sdk -target x86_64-apple-darwin -mmacos-version-min=13 -x objective-c -fobjc-arc -c /Users/anastasiya.krupinina/.pub-cache/hosted/pub.dev/objective_c-9.3.0/src/ns_number.m -fpic -I src -o /Users/anastasiya.krupinina/Uni/home_wine/.dart_tool/hooks_runner/shared/objective_c/build/5f31b8d621/obj/src/ns_number.m.o
+
+INFO: 2026-05-11 18:25:25.089643: 
+INFO: 2026-05-11 18:25:25.089740: 
+INFO: 2026-05-11 18:25:25.089764: Generated /Users/anastasiya.krupinina/Uni/home_wine/.dart_tool/hooks_runner/shared/objective_c/build/5f31b8d621/obj/src/objective_c.c.o
+
+INFO: 2026-05-11 18:25:25.091894: 
+INFO: 2026-05-11 18:25:25.091939: 
+INFO: 2026-05-11 18:25:25.091950: Generated /Users/anastasiya.krupinina/Uni/home_wine/.dart_tool/hooks_runner/shared/objective_c/build/5f31b8d621/obj/src/include/dart_api_dl.c.o
+
+INFO: 2026-05-11 18:25:25.092044: 
+INFO: 2026-05-11 18:25:25.092055: 
+INFO: 2026-05-11 18:25:25.092062: Generated /Users/anastasiya.krupinina/Uni/home_wine/.dart_tool/hooks_runner/shared/objective_c/build/5f31b8d621/obj/src/observer.m.o
+
+INFO: 2026-05-11 18:25:25.093335: 
+INFO: 2026-05-11 18:25:25.093418: 
+INFO: 2026-05-11 18:25:25.093453: Generated /Users/anastasiya.krupinina/Uni/home_wine/.dart_tool/hooks_runner/shared/objective_c/build/5f31b8d621/obj/src/protocol.m.o
+
+INFO: 2026-05-11 18:25:25.095073: 
+INFO: 2026-05-11 18:25:25.095153: 
+INFO: 2026-05-11 18:25:25.095166: Generated /Users/anastasiya.krupinina/Uni/home_wine/.dart_tool/hooks_runner/shared/objective_c/build/5f31b8d621/obj/test/util.c.o
+
+INFO: 2026-05-11 18:25:25.292045: 
+INFO: 2026-05-11 18:25:25.292091: 
+INFO: 2026-05-11 18:25:25.292101: Generated /Users/anastasiya.krupinina/Uni/home_wine/.dart_tool/hooks_runner/shared/objective_c/build/5f31b8d621/obj/src/ns_number.m.o
+
+INFO: 2026-05-11 18:25:25.303751: 
+INFO: 2026-05-11 18:25:25.303797: 
+INFO: 2026-05-11 18:25:25.303808: Generated /Users/anastasiya.krupinina/Uni/home_wine/.dart_tool/hooks_runner/shared/objective_c/build/5f31b8d621/obj/src/objective_c.m.o
+
+ter.m.o
+
+INFO: 2026-05-11 18:25:25.309765: 
+INFO: 2026-05-11 18:25:25.309801: 
+INFO: 2026-05-11 18:25:25.309810: Generated /Users/anastasiya.krupinina/Uni/home_wine/.dart_tool/hooks_runner/shared/objective_c/build/5f31b8d621/obj/src/objective_c_bindings_generated.m.o
+
+INFO: 2026-05-11 18:25:25.310197: Running: /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang -shared -Wl,-encryptable -undefined dynamic_lookup -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.5.sdk -target x86_64-apple-darwin -mmacos-version-min=13 /Users/anastasiya.krupinina/Uni/home_wine/.dart_tool/hooks_runner/shared/objective_c/build/5f31b8d621/obj/src/include/dart_api_dl.c.o /Users/anastasiya.krupinina/Uni/home_wine/.dart_tool/hooks_runner/shared/objective_c/build/5f31b8d621/obj/src/objective_c.c.o /Users/anastasiya.krupinina/Uni/home_wine/.dart_tool/hooks_runner/shared/objective_c/build/5f31b8d621/obj/test/util.c.o /Users/anastasiya.krupinina/Uni/home_wine/.dart_tool/hooks_runner/shared/objective_c/build/5f31b8d621/obj/src/input_stream_adapter.m.o /Users/anastasiya.krupinina/Uni/home_wine/.dart_tool/hooks_runner/shared/objective_c/build/5f31b8d621/obj/src/objective_c.m.o /Users/anastasiya.krupinina/Uni/home_wine/.dart_tool/hooks_runner/shared/objective_c/build/5f31b8d621/obj/src/observer.m.o /Users/anastasiya.krupinina/Uni/home_wine/.dart_tool/hooks_runner/shared/objective_c/build/5f31b8d621/obj/src/ns_number.m.o /Users/anastasiya.krupinina/Uni/home_wine/.dart_tool/hooks_runner/shared/objective_c/build/5f31b8d621/obj/src/protocol.m.o /Users/anastasiya.krupinina/Uni/home_wine/.dart_tool/hooks_runner/shared/objective_c/build/5f31b8d621/obj/src/objective_c_bindings_generated.m.o -o /Users/anastasiya.krupinina/Uni/home_wine/.dart_tool/hooks_runner/shared/objective_c/build/5f31b8d621/objective_c.dylib
+
+INFO: 2026-05-11 18:25:25.338732: 
+INFO: 2026-05-11 18:25:25.338791: 
+INFO: 2026-05-11 18:25:25.338807: Generated /Users/anastasiya.krupinina/Uni/home_wine/.dart_tool/hooks_runner/shared/objective_c/build/5f31b8d621/objective_c.dylib
+

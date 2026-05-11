@@ -1,0 +1,121 @@
+import 'package:auto_route/auto_route.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:flutter/material.dart';
+import 'package:home_wine/core/colors/app_colors.dart';
+import 'package:home_wine/core/database/database_service.dart';
+import 'package:home_wine/core/dependencies/get_it.dart';
+import 'package:home_wine/core/router/app_router.dart';
+import 'package:home_wine/core/style/app_text_style.dart';
+import 'package:home_wine/core/sync/ucloud_sync_service.dart';
+import 'package:home_wine/feature/login_page/presentation/widget/line.dart';
+
+@RoutePage()
+class SplashPage extends StatefulWidget {
+  const SplashPage({super.key});
+
+  @override
+  State<SplashPage> createState() => _SplashPageState();
+}
+
+class _SplashPageState extends State<SplashPage> with SingleTickerProviderStateMixin {
+  late AnimationController _bgController;
+
+  @override
+  void initState() {
+    super.initState();
+    _bgController = AnimationController(vsync: this, duration: const Duration(seconds: 10))
+      ..repeat(reverse: true);
+    _checkAuth();
+  }
+
+  Future<void> _checkAuth() async {
+    if (kIsWeb) {
+      if (mounted) context.router.replace(const LoginRoute());
+      return;
+    }
+
+    final hasCreds = await getIt<UCloudSyncService>().hasCredentials();
+    if (!mounted) return;
+
+    if (hasCreds) {
+      await getIt<DatabaseService>().init();
+      await getIt<UCloudSyncService>().syncOnStart();
+      if (!mounted) return;
+      context.router.replace(const DashboardRoute());
+    } else {
+      context.router.replace(const LoginRoute());
+    }
+  }
+
+  @override
+  void dispose() {
+    _bgController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: AppColors.baseWhite,
+      body: Stack(
+        children: [
+          Positioned.fill(
+            child: AnimatedBuilder(
+              animation: _bgController,
+              builder: (context, child) {
+                return CustomPaint(painter: WineLinesPainter(progress: _bgController.value));
+              },
+            ),
+          ),
+          Center(
+            child: TweenAnimationBuilder<double>(
+              tween: Tween(begin: 0.0, end: 1.0),
+              duration: const Duration(milliseconds: 1500),
+              curve: Curves.easeOutExpo,
+              builder: (context, value, child) {
+                return Opacity(
+                  opacity: value,
+                  child: Transform.scale(scale: 0.8 + (0.2 * value), child: child),
+                );
+              },
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Stack(
+                    alignment: Alignment.center,
+                    children: [
+                      Container(
+                        width: 120,
+                        height: 120,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          gradient: RadialGradient(
+                            colors: [
+                              AppColors.lightBlue.withOpacity(0.5),
+                              AppColors.lightBlue.withOpacity(0),
+                            ],
+                          ),
+                        ),
+                      ),
+                      const Icon(Icons.wine_bar_rounded, size: 80, color: AppColors.darkBlue),
+                    ],
+                  ),
+                  const SizedBox(height: 24),
+                  Text(
+                    'WineIo',
+                    style: AppTextStyles.h1.copyWith(
+                      letterSpacing: 12,
+                      fontSize: 32,
+                      fontWeight: FontWeight.w200,
+                      color: AppColors.darkBlue,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}

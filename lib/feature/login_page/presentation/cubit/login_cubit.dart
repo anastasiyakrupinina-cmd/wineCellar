@@ -1,0 +1,35 @@
+import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:home_wine/core/sync/ucloud_sync_service.dart';
+import 'package:injectable/injectable.dart';
+
+import 'login_state.dart';
+
+@injectable
+class LoginCubit extends Cubit<LoginState> {
+  final UCloudSyncService _syncService;
+
+  LoginCubit(this._syncService) : super(LoginInitial());
+
+  Future<void> login(String username, String password) async {
+    emit(LoginLoading());
+    try {
+      if (kIsWeb) {
+        // WebDAV requests are blocked by CORS on web — skip validation and sync.
+        await _syncService.saveCredentials(username, password);
+        emit(LoginSuccess());
+        return;
+      }
+      final isValid = await _syncService.validateCredentials(username, password);
+      if (isValid) {
+        await _syncService.saveCredentials(username, password);
+        await _syncService.syncOnStart();
+        emit(LoginSuccess());
+      } else {
+        emit(LoginFailure('Invalid u:cloud credentials. Use your university email and password.'));
+      }
+    } catch (e) {
+      emit(LoginFailure('Connection error: ${e.toString()}'));
+    }
+  }
+}
