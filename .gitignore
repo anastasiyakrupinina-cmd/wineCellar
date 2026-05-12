@@ -18,4 +18,4 @@ macos/Flutter/ephemeral/
 # IDE
 .vscode/
 .idea/
-.DS_Store
+.DS_Store.claude/
