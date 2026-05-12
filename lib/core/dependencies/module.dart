@@ -14,7 +14,7 @@ abstract class InjectionModule {
         baseUrl: 'https://api.wineapi.io',
         connectTimeout: const Duration(seconds: 10),
         receiveTimeout: const Duration(seconds: 10),
-        headers: {'X-API-Key': 'wapi_7be61e7336998c2d4b58e3abdc885117a210c86c392ecba939f53cf31f8377c4'},
+        headers: {'X-API-Key': 'wapi_b78ebb7bb03ea81a327806b64ecc4f455f0ec45505d0e810ac7b9fb2c2c60908'},
       ),
     );
   }

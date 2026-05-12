@@ -71,13 +71,8 @@ class ManageStorageCubit extends Cubit<ManageStorageState> {
   }
 
   Future<void> _moveCabinetWinesToUnassigned(CabinetModel cabinet) async {
-    final occupiedWineIds = cabinet.shelves
-        .expand((shelf) => shelf.positions)
-        .map((pos) => pos.wineId)
-        .whereType<String>()
-        .where((id) => id.isNotEmpty)
-        .toSet();
-
+    // SQL query replaces scanning the in-memory cabinet tree.
+    final occupiedWineIds = await _repository.getWineIdsInCabinet(cabinet.id);
     if (occupiedWineIds.isEmpty) return;
 
     List<WineModel> wines;

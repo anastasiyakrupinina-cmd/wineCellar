@@ -209,12 +209,12 @@ class _SearchWineCard extends StatelessWidget {
                               fit: BoxFit.cover,
                               errorBuilder: (context, error, stackTrace) {
                                 return Center(
-                                  child: AbstractWineBottle(type: wine.type, size: 80),
+                                  child: AbstractWineBottle(type: wine.type, size: 110),
                                 );
                               },
                             )
                           : Center(
-                              child: AbstractWineBottle(type: wine.type, size: 80),
+                              child: AbstractWineBottle(type: wine.type, size: 110),
                             ),
                     ),
                   ),

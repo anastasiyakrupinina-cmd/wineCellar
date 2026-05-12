@@ -14,12 +14,6 @@ class LoginCubit extends Cubit<LoginState> {
   Future<void> login(String username, String password) async {
     emit(LoginLoading());
     try {
-      if (kIsWeb) {
-        // WebDAV requests are blocked by CORS on web — skip validation and sync.
-        await _syncService.saveCredentials(username, password);
-        emit(LoginSuccess());
-        return;
-      }
       final isValid = await _syncService.validateCredentials(username, password);
       if (isValid) {
         await _syncService.saveCredentials(username, password);

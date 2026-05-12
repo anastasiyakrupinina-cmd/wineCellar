@@ -32,7 +32,7 @@ class _MyAppState extends State<MyApp> {
     _appRouter = AppRouter();
     _lifecycleListener = AppLifecycleListener(
       onPause: _onAppBackground,   // Android: app goes to background
-      onDetach: _onAppBackground,  // Android/iOS: app is being closed
+      onDetach: _onAppBackground,  // Android app is being closed
       onHide: _onAppBackground,    // Windows: window minimized or hidden
     );
   }

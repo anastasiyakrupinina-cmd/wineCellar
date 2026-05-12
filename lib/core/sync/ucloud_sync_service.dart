@@ -13,10 +13,13 @@ class UCloudSyncService {
   static const String _usernameKey = 'ucloud_username';
   static const String _passwordKey = 'ucloud_password';
 
-  static const String _webDavBase =
-      'https://ucloud.univie.ac.at/remote.php/dav/files/krupininaa00%40univie.ac.at/';
+  static const String _webDavHost =
+      'https://ucloud.univie.ac.at/remote.php/dav/files/';
   static const String _remoteDir = 'winecellar';
   static const String _remoteFile = 'winecellar/winecellar.db';
+
+  static String _buildWebDavBase(String username) =>
+      '$_webDavHost${Uri.encodeComponent(username)}/';
 
   static const int _connectTimeoutMs = 10000; // 10 s
   static const int _receiveTimeoutMs = 30000; // 30 s
@@ -27,6 +30,8 @@ class UCloudSyncService {
   bool _isUploading = false;
 
   UCloudSyncService(this._databaseService);
+
+  
 
   Future<bool> hasCredentials() async {
     final username = await _secureStorage.read(key: _usernameKey);
@@ -56,7 +61,7 @@ class UCloudSyncService {
     if (kIsWeb) return false;
     try {
       final testClient = webdav.newClient(
-        _webDavBase,
+        _buildWebDavBase(username),
         user: username,
         password: password,
         debug: false,
@@ -77,7 +82,7 @@ class UCloudSyncService {
       return null;
     }
     final client = webdav.newClient(
-      _webDavBase,
+      _buildWebDavBase(username),
       user: username,
       password: password,
       debug: false,

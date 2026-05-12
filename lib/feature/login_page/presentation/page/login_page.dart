@@ -103,7 +103,7 @@ class _LoginPageState extends State<LoginPage> with SingleTickerProviderStateMix
                                   children: [
                                     AppTextField(
                                       label: 'University email',
-                                      hint: 'krupininaa00@univie.ac.at',
+                                      hint: 'email@univie.ac.at',
                                       controller: _emailController,
                                       keyboardType: TextInputType.emailAddress,
                                       prefixIcon: Icons.alternate_email_rounded,
@@ -180,10 +180,10 @@ class _LoginPageState extends State<LoginPage> with SingleTickerProviderStateMix
         ),
         const SizedBox(height: 16),
         Text(
-          'WineIo',
+          'WineCellar',
           style: AppTextStyles.h1.copyWith(
             letterSpacing: 12,
-            fontSize: 26,
+            fontSize: 24,
             fontWeight: FontWeight.w200,
             color: AppColors.darkBlue,
           ),

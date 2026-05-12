@@ -49,16 +49,18 @@ class MainWineList extends StatelessWidget {
     return SliverPadding(
       padding: const EdgeInsets.fromLTRB(24, 120, 24, 16),
       sliver: SliverToBoxAdapter(
-        child: AppTextField(
-          label: 'Search',
-          hint: 'Search by name or region...',
-          controller: searchController,
-          prefixIcon: Icons.search_rounded,
-          suffixIcon: searchController.text.isNotEmpty ? Icons.close_rounded : null,
-          onSuffixTap: () {
-            searchController.clear();
-            FocusManager.instance.primaryFocus?.unfocus();
-          },
+        child: ValueListenableBuilder<TextEditingValue>(
+          valueListenable: searchController,
+          builder: (context, value, _) => AppTextField(
+            hint: 'Search by name, region, year ...',
+            controller: searchController,
+            prefixIcon: Icons.search_rounded,
+            suffixIcon: value.text.isNotEmpty ? Icons.close_rounded : null,
+            onSuffixTap: () {
+              searchController.clear();
+              FocusManager.instance.primaryFocus?.unfocus();
+            },
+          ),
         ),
       ),
     );
@@ -85,10 +87,6 @@ class MainWineList extends StatelessWidget {
                   color: AppColors.darkBlue,
                 ),
                 const SizedBox(width: 10),
-                Text(
-                  'Back to Storage',
-                  style: AppTextStyles.body.copyWith(fontWeight: FontWeight.bold, color: AppColors.darkBlue),
-                ),
               ],
             ),
           ),

@@ -102,7 +102,7 @@ class _SplashPageState extends State<SplashPage> with SingleTickerProviderStateM
                   ),
                   const SizedBox(height: 24),
                   Text(
-                    'WineIo',
+                    'WineCellar',
                     style: AppTextStyles.h1.copyWith(
                       letterSpacing: 12,
                       fontSize: 32,

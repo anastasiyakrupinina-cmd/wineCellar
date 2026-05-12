@@ -67,7 +67,7 @@ class MainRepositoryImpl implements MainRepository {
     return rows.map(_rowToWineModel).toList();
   }
 
-  /// SQLite is the source of truth — delegates to getLocalWines().
+  
   @override
   Future<List<WineModel>> getRemoteWines() async {
     return getLocalWines();
@@ -76,6 +76,9 @@ class MainRepositoryImpl implements MainRepository {
   @override
   Future<void> deleteWine(String wineId) async {
     _assertInitialized();
+    await _databaseService.db.rawUpdate(
+      'UPDATE positions SET wine_id = NULL WHERE wine_id = ?', [wineId],
+    );
     await _databaseService.db.delete('wines', where: 'id = ?', whereArgs: [wineId]);
     _syncService.syncOnClose(); // fire-and-forget
   }

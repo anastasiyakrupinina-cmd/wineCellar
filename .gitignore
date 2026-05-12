@@ -1,0 +1,21 @@
+.dart_tool/
+build/
+.flutter-plugins
+.flutter-plugins-dependencies
+.packages
+.pub-cache/
+.pub/
+coverage/
+
+# Android/iOS generated
+android/.gradle/
+android/app/build/
+ios/Pods/
+
+# macOS generated
+macos/Flutter/ephemeral/
+
+# IDE
+.vscode/
+.idea/
+.DS_Store

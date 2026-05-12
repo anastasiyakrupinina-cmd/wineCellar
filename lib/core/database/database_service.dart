@@ -11,32 +11,21 @@ class DatabaseService {
   Database? _db;
   String? _dbPath;
 
-  /// True once init() has completed successfully.
   bool get isInitialized => _db != null;
 
-  /// Returns the open database. Throws if init() was not called first.
   Database get db {
-    if (_db == null) {
-      throw StateError('DatabaseService not initialized. Call init() first.');
-    }
+    if (_db == null) throw StateError('DatabaseService not initialized. Call init() first.');
     return _db!;
   }
 
-  /// Returns the on-disk path to the .db file.
-  /// Remains valid after close() so that UCloudSyncService can still reference it.
   String get dbPath {
-    if (_dbPath == null) {
-      throw StateError('DatabaseService not initialized. Call init() first.');
-    }
+    if (_dbPath == null) throw StateError('DatabaseService not initialized. Call init() first.');
     return _dbPath!;
   }
 
-  /// Opens (or creates) the SQLite database.
-  /// Safe to call multiple times — returns immediately if already open.
-  /// No-op on web.
   Future<void> init() async {
-    if (_db != null) return; // already open — idempotent
-    if (kIsWeb) return;      // SQLite not supported on web
+    if (_db != null) return;
+    if (kIsWeb) return;
 
     if (Platform.isWindows || Platform.isLinux) {
       sqfliteFfiInit();
@@ -50,17 +39,18 @@ class DatabaseService {
 
     _db = await openDatabase(
       _dbPath!,
-      version: 1,
+      version: 2,
+      onConfigure: (db) async {
+        await db.execute('PRAGMA foreign_keys = ON');
+      },
       onCreate: _onCreate,
     );
   }
 
-  /// Closes the database connection without clearing the path.
-  /// Used by UCloudSyncService before overwriting the file on disk.
   Future<void> close() async {
     await _db?.close();
     _db = null;
-    // _dbPath is intentionally preserved so dbPath still works after close()
+    // _dbPath intentionally preserved so dbPath still works after close()
   }
 
   Future<void> _onCreate(Database db, int version) async {
@@ -89,10 +79,27 @@ class DatabaseService {
 
     await db.execute('''
       CREATE TABLE cabinets (
-        id TEXT PRIMARY KEY,
-        data TEXT NOT NULL,
-        updatedAt INTEGER
+        id   TEXT PRIMARY KEY,
+        name TEXT NOT NULL
+      )
+    ''');
+
+    await db.execute('''
+      CREATE TABLE shelves (
+        id          TEXT PRIMARY KEY,
+        cabinet_id  TEXT NOT NULL REFERENCES cabinets(id) ON DELETE CASCADE,
+        name        TEXT NOT NULL
+      )
+    ''');
+
+    await db.execute('''
+      CREATE TABLE positions (
+        id             TEXT PRIMARY KEY,
+        shelf_id       TEXT NOT NULL REFERENCES shelves(id) ON DELETE CASCADE,
+        position_index INTEGER NOT NULL,
+        wine_id        TEXT
       )
     ''');
   }
+
 }
