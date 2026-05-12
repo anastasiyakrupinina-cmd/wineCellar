@@ -90,10 +90,7 @@ extension GetItInjectableX on _i174.GetIt {
       () => _i13.ProfileCubit(gh<_i997.ProfileRepository>()),
     );
     gh.factory<_i87.ManageStorageCubit>(
-      () => _i87.ManageStorageCubit(
-        gh<_i997.ProfileRepository>(),
-        gh<_i536.MainRepository>(),
-      ),
+      () => _i87.ManageStorageCubit(gh<_i997.ProfileRepository>()),
     );
     return this;
   }

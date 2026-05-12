@@ -15,9 +15,8 @@ abstract class ProfileRepository {
   Future<List<String>> getWineIdsInCabinet(String cabinetId);
 
   /// Frees the [count] highest-indexed spots occupied by [wineId].
-  /// Returns the new cellarLocation string built from remaining spots,
-  /// or null if no spots were found (caller keeps the original location).
-  Future<String?> freeSpots(String wineId, int count);
+  /// cellarLocation is recomputed from positions on the next getLocalWines() call.
+  Future<void> freeSpots(String wineId, int count);
 }
 
 @Injectable(as: ProfileRepository)
@@ -154,11 +153,10 @@ class ProfileRepositoryImpl implements ProfileRepository {
   }
 
   @override
-  Future<String?> freeSpots(String wineId, int count) async {
+  Future<void> freeSpots(String wineId, int count) async {
     _assertInitialized();
     final db = _databaseService.db;
 
-    // Find the highest-indexed spots for this wine
     final toFree = await db.rawQuery('''
       SELECT id FROM positions
       WHERE  wine_id = ?
@@ -166,7 +164,7 @@ class ProfileRepositoryImpl implements ProfileRepository {
       LIMIT  ?
     ''', [wineId, count]);
 
-    if (toFree.isEmpty) return null;
+    if (toFree.isEmpty) return;
 
     final ids          = toFree.map((r) => r['id'] as String).toList();
     final placeholders = List.filled(ids.length, '?').join(', ');
@@ -174,32 +172,5 @@ class ProfileRepositoryImpl implements ProfileRepository {
       'UPDATE positions SET wine_id = NULL WHERE id IN ($placeholders)',
       ids,
     );
-
-    // cellarLocation string from whatever spots remain
-    final remaining = await db.rawQuery('''
-      SELECT c.name AS cabinet_name,
-             s.name AS shelf_name,
-             p.position_index
-      FROM   positions p
-      JOIN   shelves   s ON p.shelf_id   = s.id
-      JOIN   cabinets  c ON s.cabinet_id = c.id
-      WHERE  p.wine_id = ?
-      ORDER  BY c.name, s.name, p.position_index
-    ''', [wineId]);
-
-    if (remaining.isEmpty) return '';
-
-    final grouped = <String, List<int>>{};
-    for (final row in remaining) {
-      final key = '${row['cabinet_name']} > ${row['shelf_name']}';
-      grouped.putIfAbsent(key, () => []).add(row['position_index'] as int);
-    }
-
-    final parts = grouped.entries
-        .map((e) => '${e.key} > Spot ${e.value.join(', ')}')
-        .toList()
-      ..sort();
-
-    return parts.join(' ; ');
   }
 }

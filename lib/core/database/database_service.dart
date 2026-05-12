@@ -68,7 +68,6 @@ class DatabaseService {
         description TEXT,
         alcoholContent TEXT,
         quantity INTEGER DEFAULT 1,
-        cellarLocation TEXT,
         notice TEXT,
         imageUrl TEXT,
         prices TEXT,

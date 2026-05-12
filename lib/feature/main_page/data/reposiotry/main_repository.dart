@@ -44,7 +44,6 @@ class MainRepositoryImpl implements MainRepository {
         'description': wine.description,
         'alcoholContent': wine.alcoholContent,
         'quantity': wine.quantity,
-        'cellarLocation': wine.cellarLocation,
         'notice': wine.notice,
         'imageUrl': wine.imageUrl,
         'prices': wine.prices != null
@@ -63,15 +62,45 @@ class MainRepositoryImpl implements MainRepository {
   @override
   Future<List<WineModel>> getLocalWines() async {
     _assertInitialized();
-    final rows = await _databaseService.db.query('wines', orderBy: 'name ASC');
-    return rows.map(_rowToWineModel).toList();
+    final db = _databaseService.db;
+
+    final wineRows = await db.query('wines', orderBy: 'name ASC');
+
+    // Fetch all assigned positions with their cabinet/shelf names in one query.
+    final posRows = await db.rawQuery('''
+      SELECT p.wine_id,
+             c.name AS cabinet_name,
+             s.name AS shelf_name,
+             p.position_index
+      FROM   positions p
+      JOIN   shelves  s ON p.shelf_id   = s.id
+      JOIN   cabinets c ON s.cabinet_id = c.id
+      WHERE  p.wine_id IS NOT NULL
+      ORDER  BY c.name, s.name, p.position_index
+    ''');
+
+    // Group indexes by wine → cabinet+shelf key, preserving ORDER BY order.
+    final grouped = <String, Map<String, List<int>>>{};
+    for (final row in posRows) {
+      final wineId = row['wine_id'] as String;
+      final key    = '${row['cabinet_name']} > ${row['shelf_name']}';
+      (grouped[wineId] ??= {})[key] = [...(grouped[wineId]?[key] ?? []), row['position_index'] as int];
+    }
+
+    // Build the same "Cabinet > Shelf > Spot 1, 2" ; "..." 
+    final locations = grouped.map((wineId, shelfMap) {
+      final parts = shelfMap.entries
+          .map((e) => '${e.key} > Spot ${e.value.join(', ')}')
+          .toList()
+        ..sort();
+      return MapEntry(wineId, parts.join(' ; '));
+    });
+
+    return wineRows.map((row) => _rowToWineModel(row, locations[row['id'] as String])).toList();
   }
 
-  
   @override
-  Future<List<WineModel>> getRemoteWines() async {
-    return getLocalWines();
-  }
+  Future<List<WineModel>> getRemoteWines() => getLocalWines();
 
   @override
   Future<void> deleteWine(String wineId) async {
@@ -83,7 +112,7 @@ class MainRepositoryImpl implements MainRepository {
     _syncService.syncOnClose(); // fire-and-forget
   }
 
-  WineModel _rowToWineModel(Map<String, dynamic> row) {
+  WineModel _rowToWineModel(Map<String, dynamic> row, [String? cellarLocation]) {
     return WineModel.fromJson({
       'id': row['id'],
       'name': row['name'],
@@ -97,7 +126,7 @@ class MainRepositoryImpl implements MainRepository {
       'description': row['description'],
       'alcoholContent': row['alcoholContent'],
       'quantity': row['quantity'],
-      'cellarLocation': row['cellarLocation'],
+      'cellarLocation': cellarLocation,
       'notice': row['notice'],
       'imageUrl': row['imageUrl'],
       'prices': row['prices'] != null ? jsonDecode(row['prices'] as String) : null,

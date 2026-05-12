@@ -1,17 +1,14 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:home_wine/feature/main_page/data/reposiotry/main_repository.dart';
 import 'package:home_wine/feature/manage_storage_page/presentation/page/manage_storage_state.dart';
 import 'package:home_wine/feature/profile_page/data/repository/profile_repository.dart';
 import 'package:home_wine/feature/profile_page/data/repository/storage_model.dart';
-import 'package:home_wine/feature/wine/data/models/wine_model.dart';
 import 'package:injectable/injectable.dart';
 
 @injectable
 class ManageStorageCubit extends Cubit<ManageStorageState> {
   final ProfileRepository _repository;
-  final MainRepository _mainRepository;
 
-  ManageStorageCubit(this._repository, this._mainRepository) : super(ManageStorageInitial());
+  ManageStorageCubit(this._repository) : super(ManageStorageInitial());
 
   Future<void> loadCabinets() async {
     emit(ManageStorageLoading());
@@ -39,8 +36,9 @@ class ManageStorageCubit extends Cubit<ManageStorageState> {
 
   Future<void> deleteCabinet(CabinetModel cabinet) async {
     try {
-      await _moveCabinetWinesToUnassigned(cabinet);
       await _repository.deleteCabinet(cabinet.id);
+      // ON DELETE CASCADE removes shelves and positions.
+      // cellarLocation is computed from positions on the next load — no manual update needed.
       await loadCabinets();
     } catch (e) {
       emit(ManageStorageError(e.toString()));
@@ -54,8 +52,10 @@ class ManageStorageCubit extends Cubit<ManageStorageState> {
         name: shelfName,
         positions: List.generate(
           positionsCount,
-          (index) =>
-              BottlePositionModel(id: '${DateTime.now().millisecondsSinceEpoch}_$index', index: index + 1),
+          (index) => BottlePositionModel(
+            id: '${DateTime.now().millisecondsSinceEpoch}_$index',
+            index: index + 1,
+          ),
         ),
       );
       final updatedCabinet = CabinetModel(
@@ -68,41 +68,5 @@ class ManageStorageCubit extends Cubit<ManageStorageState> {
     } catch (e) {
       emit(ManageStorageError(e.toString()));
     }
-  }
-
-  Future<void> _moveCabinetWinesToUnassigned(CabinetModel cabinet) async {
-    // SQL query replaces scanning the in-memory cabinet tree.
-    final occupiedWineIds = await _repository.getWineIdsInCabinet(cabinet.id);
-    if (occupiedWineIds.isEmpty) return;
-
-    List<WineModel> wines;
-    try {
-      wines = await _mainRepository.getRemoteWines();
-    } catch (_) {
-      wines = await _mainRepository.getLocalWines();
-    }
-    final winesById = <String, WineModel>{for (final wine in wines) wine.id: wine};
-
-    for (final wineId in occupiedWineIds) {
-      final wine = winesById[wineId];
-      if (wine == null) continue;
-
-      final updatedLocation = _removeCabinetFromLocation(wine.cellarLocation, cabinet.name);
-      await _mainRepository.saveWine(wine.copyWith(cellarLocation: updatedLocation));
-    }
-  }
-
-  String _removeCabinetFromLocation(String? location, String cabinetName) {
-    final raw = location?.trim() ?? '';
-    if (raw.isEmpty || raw == 'Unassigned') return 'Unassigned';
-
-    final remaining = raw
-        .split(' ; ')
-        .map((loc) => loc.trim())
-        .where((loc) => loc.isNotEmpty && !loc.startsWith('$cabinetName >'))
-        .toList();
-
-    if (remaining.isEmpty) return 'Unassigned';
-    return remaining.join(' ; ');
   }
 }

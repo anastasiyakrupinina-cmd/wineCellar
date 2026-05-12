@@ -85,15 +85,13 @@ class MainCubit extends Cubit<MainState> {
       }
 
       final diff = newQuantity - wine.quantity;
-      String? newLocation = wine.cellarLocation;
 
       if (diff < 0) {
-        // freeSpots returns null when wine has no assigned spots — keep original.
-        newLocation = await _profileRepository.freeSpots(wine.id, -diff)
-            ?? wine.cellarLocation;
+        await _profileRepository.freeSpots(wine.id, -diff);
       }
 
-      final updatedWine = wine.copyWith(quantity: newQuantity, cellarLocation: newLocation);
+      // cellarLocation is recomputed from positions by loadWines() below.
+      final updatedWine = wine.copyWith(quantity: newQuantity);
 
       if (state is MainLoaded) {
         final currentWines = List<WineModel>.from((state as MainLoaded).wines);
