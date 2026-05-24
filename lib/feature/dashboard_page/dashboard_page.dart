@@ -14,7 +14,7 @@ class DashboardPage extends StatelessWidget {
     final bool isDesktop = MediaQuery.of(context).size.width > 900;
 
     return AutoTabsRouter(
-      routes: const [MainRoute(), SearchRoute(), ProfileRoute()],
+      routes: const [MainRoute(), SearchRoute(), WishlistRoute(), ProfileRoute()],
       builder: (context, child) {
         final tabsRouter = AutoTabsRouter.of(context);
 
@@ -63,10 +63,17 @@ class DashboardPage extends StatelessWidget {
           ),
           const SizedBox(height: 32),
           _buildRailItem(
-            icon: Icons.person_outline,
-            activeIcon: Icons.person,
+            icon: Icons.bookmark_border,
+            activeIcon: Icons.bookmark,
             isActive: tabsRouter.activeIndex == 2,
             onTap: () => tabsRouter.setActiveIndex(2),
+          ),
+          const SizedBox(height: 32),
+          _buildRailItem(
+            icon: Icons.person_outline,
+            activeIcon: Icons.person,
+            isActive: tabsRouter.activeIndex == 3,
+            onTap: () => tabsRouter.setActiveIndex(3),
           ),
 
           const Spacer(),
@@ -136,10 +143,16 @@ class DashboardPage extends StatelessWidget {
                   onTap: () => tabsRouter.setActiveIndex(1),
                 ),
                 _buildTabItem(
-                  icon: Icons.person_outline,
-                  activeIcon: Icons.person,
+                  icon: Icons.bookmark_border,
+                  activeIcon: Icons.bookmark,
                   isActive: tabsRouter.activeIndex == 2,
                   onTap: () => tabsRouter.setActiveIndex(2),
+                ),
+                _buildTabItem(
+                  icon: Icons.person_outline,
+                  activeIcon: Icons.person,
+                  isActive: tabsRouter.activeIndex == 3,
+                  onTap: () => tabsRouter.setActiveIndex(3),
                 ),
               ],
             ),

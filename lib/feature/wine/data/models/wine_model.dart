@@ -1,3 +1,4 @@
+import 'package:home_wine/feature/wine/data/models/wine_bottle.dart';
 
 class WineModel {
   final String id;
@@ -19,10 +20,14 @@ class WineModel {
 
   final List<WinePrice>? prices;
   final List<String>? foodPairings;
+  final List<String>? grapes;
+  final List<WineScore>? scores;
 
   final int quantity;
   final String? cellarLocation;
   final String? notice;
+
+  final List<WineBottle>? bottles;
 
   WineModel({
     required this.id,
@@ -39,9 +44,12 @@ class WineModel {
     this.alcoholContent,
     this.prices,
     this.foodPairings,
+    this.grapes,
+    this.scores,
     this.quantity = 1,
     this.cellarLocation,
     this.notice,
+    this.bottles,
   });
 
   factory WineModel.fromJson(Map<String, dynamic> json) {
@@ -97,6 +105,21 @@ class WineModel {
           .toList();
     }
 
+    List<String>? parseGrapes(dynamic value) {
+      if (value == null || value is! List) return null;
+      return value
+          .map((e) => e is Map ? e['name']?.toString() ?? '' : e.toString())
+          .where((e) => e.isNotEmpty)
+          .toList();
+    }
+
+    List<WineScore>? parseScores(dynamic value) {
+      if (value == null || value is! List) return null;
+      return value
+          .map((e) => WineScore.fromJson(Map<String, dynamic>.from(e)))
+          .toList();
+    }
+
     return WineModel(
       id: data['id']?.toString().isNotEmpty == true
           ? data['id'].toString()
@@ -136,11 +159,17 @@ class WineModel {
 
       foodPairings: parsePairings(data['pairings']),
 
+      grapes: parseGrapes(data['grapes']),
+
+      scores: parseScores(data['scores']),
+
       quantity: parseInt(data['quantity']) ?? 1,
 
       cellarLocation: data['cellarLocation']?.toString(),
 
       notice: data['notice']?.toString(),
+
+      bottles: null, // loaded separately from wine_bottles table
     );
   }
 
@@ -160,6 +189,8 @@ class WineModel {
       'alcoholContent': alcoholContent,
       'prices': prices?.map((p) => p.toJson()).toList(),
       'pairings': foodPairings?.map((f) => {'food': f}).toList(),
+      'grapes': grapes?.map((g) => {'name': g}).toList(),
+      'scores': scores?.map((s) => s.toJson()).toList(),
       'quantity': quantity,
       'cellarLocation': cellarLocation,
       'notice': notice,
@@ -181,9 +212,12 @@ class WineModel {
     String? alcoholContent,
     List<WinePrice>? prices,
     List<String>? foodPairings,
+    List<String>? grapes,
+    List<WineScore>? scores,
     int? quantity,
     String? cellarLocation,
     String? notice,
+    List<WineBottle>? bottles,
   }) {
     return WineModel(
       id: id ?? this.id,
@@ -200,9 +234,12 @@ class WineModel {
       alcoholContent: alcoholContent ?? this.alcoholContent,
       prices: prices ?? this.prices,
       foodPairings: foodPairings ?? this.foodPairings,
+      grapes: grapes ?? this.grapes,
+      scores: scores ?? this.scores,
       quantity: quantity ?? this.quantity,
       cellarLocation: cellarLocation ?? this.cellarLocation,
       notice: notice ?? this.notice,
+      bottles: bottles ?? this.bottles,
     );
   }
 }
@@ -237,6 +274,38 @@ class WinePrice {
       'price': price,
       'currency': currency,
       'url': url,
+    };
+  }
+}
+
+class WineScore {
+  final double? score;
+  final String? scoreText;
+  final String reviewer;
+  final String? reviewDate;
+
+  WineScore({
+    this.score,
+    this.scoreText,
+    required this.reviewer,
+    this.reviewDate,
+  });
+
+  factory WineScore.fromJson(Map<String, dynamic> json) {
+    return WineScore(
+      score: json['score'] != null ? double.tryParse(json['score'].toString()) : null,
+      scoreText: json['scoreText']?.toString(),
+      reviewer: json['reviewer']?.toString() ?? '',
+      reviewDate: json['reviewDate']?.toString(),
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'score': score,
+      'scoreText': scoreText,
+      'reviewer': reviewer,
+      'reviewDate': reviewDate,
     };
   }
 }

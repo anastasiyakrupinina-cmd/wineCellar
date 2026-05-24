@@ -10,6 +10,7 @@ import 'package:home_wine/feature/search_page/presentation/page/wine_detail_page
 import 'package:home_wine/feature/setting_page/presentation/page/settings_page.dart';
 import 'package:home_wine/feature/splash_page/splash_page.dart';
 import 'package:home_wine/feature/wine/data/models/wine_model.dart';
+import 'package:home_wine/feature/wishlist_page/presentation/page/wishlist_page.dart';
 
 part 'app_router.gr.dart';
 
@@ -28,6 +29,7 @@ class AppRouter extends RootStackRouter {
       children: [
         AutoRoute(page: MainRoute.page, path: 'main', initial: true),
         AutoRoute(page: SearchRoute.page, path: 'search'),
+        AutoRoute(page: WishlistRoute.page, path: 'wishlist'),
         AutoRoute(page: ProfileRoute.page, path: 'profile'),
       ],
     ),

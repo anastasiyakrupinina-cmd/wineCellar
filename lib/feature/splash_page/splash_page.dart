@@ -8,6 +8,7 @@ import 'package:home_wine/core/router/app_router.dart';
 import 'package:home_wine/core/style/app_text_style.dart';
 import 'package:home_wine/core/sync/ucloud_sync_service.dart';
 import 'package:home_wine/feature/login_page/presentation/widget/line.dart';
+import 'package:home_wine/feature/wishlist_page/presentation/cubit/wishlist_cubit.dart';
 
 @RoutePage()
 class SplashPage extends StatefulWidget {
@@ -39,6 +40,7 @@ class _SplashPageState extends State<SplashPage> with SingleTickerProviderStateM
 
     if (hasCreds) {
       await getIt<DatabaseService>().init();
+      await getIt<WishlistCubit>().load();
       await getIt<UCloudSyncService>().syncOnStart();
       if (!mounted) return;
       context.router.replace(const DashboardRoute());

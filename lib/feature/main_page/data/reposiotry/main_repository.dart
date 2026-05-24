@@ -2,6 +2,8 @@ import 'dart:convert';
 
 import 'package:home_wine/core/database/database_service.dart';
 import 'package:home_wine/core/sync/ucloud_sync_service.dart';
+import 'package:home_wine/feature/wine/data/models/purchase_record.dart';
+import 'package:home_wine/feature/wine/data/models/wine_bottle.dart';
 import 'package:home_wine/feature/wine/data/models/wine_model.dart';
 import 'package:injectable/injectable.dart';
 import 'package:sqflite/sqflite.dart';
@@ -11,6 +13,10 @@ abstract class MainRepository {
   Future<List<WineModel>> getLocalWines();
   Future<List<WineModel>> getRemoteWines();
   Future<void> deleteWine(String wineId);
+
+  Future<List<PurchaseRecord>> getPurchaseHistory(String wineId);
+  Future<void> savePurchaseRecord(PurchaseRecord record);
+  Future<void> deletePurchaseRecord(String recordId);
 }
 
 @Injectable(as: MainRepository)
@@ -29,34 +35,43 @@ class MainRepositoryImpl implements MainRepository {
   @override
   Future<void> saveWine(WineModel wine) async {
     _assertInitialized();
-    await _databaseService.db.insert(
-      'wines',
-      {
-        'id': wine.id,
-        'name': wine.name,
-        'vintage': wine.vintage,
-        'type': wine.type,
-        'winery': wine.winery,
-        'region': wine.region,
-        'country': wine.country,
-        'averageRating': wine.averageRating,
-        'ratingsCount': wine.ratingsCount,
-        'description': wine.description,
-        'alcoholContent': wine.alcoholContent,
-        'quantity': wine.quantity,
-        'notice': wine.notice,
-        'imageUrl': wine.imageUrl,
-        'prices': wine.prices != null
-            ? jsonEncode(wine.prices!.map((p) => p.toJson()).toList())
-            : null,
-        'pairings': wine.foodPairings != null
-            ? jsonEncode(wine.foodPairings!.map((f) => {'food': f}).toList())
-            : null,
-        'updatedAt': DateTime.now().millisecondsSinceEpoch,
-      },
-      conflictAlgorithm: ConflictAlgorithm.replace,
-    );
-    _syncService.syncOnClose(); // fire-and-forget: upload while app is still active
+    await _databaseService.db.transaction((txn) async {
+      await txn.insert(
+        'wines',
+        {
+          'id': wine.id,
+          'name': wine.name,
+          'vintage': wine.vintage,
+          'type': wine.type,
+          'winery': wine.winery,
+          'region': wine.region,
+          'country': wine.country,
+          'averageRating': wine.averageRating,
+          'ratingsCount': wine.ratingsCount,
+          'description': wine.description,
+          'alcoholContent': wine.alcoholContent,
+          'quantity': wine.quantity,
+          'notice': wine.notice,
+          'imageUrl': wine.imageUrl,
+          'prices': wine.prices != null
+              ? jsonEncode(wine.prices!.map((p) => p.toJson()).toList())
+              : null,
+          'pairings': wine.foodPairings != null
+              ? jsonEncode(wine.foodPairings!.map((f) => {'food': f}).toList())
+              : null,
+          'grapes': wine.grapes != null ? jsonEncode(wine.grapes) : null,
+        },
+        conflictAlgorithm: ConflictAlgorithm.replace,
+      );
+
+      if (wine.bottles != null) {
+        await txn.delete('wine_bottles', where: 'wine_id = ?', whereArgs: [wine.id]);
+        for (final bottle in wine.bottles!) {
+          await txn.insert('wine_bottles', bottle.toMap());
+        }
+      }
+    });
+    _syncService.syncOnClose();
   }
 
   @override
@@ -65,6 +80,14 @@ class MainRepositoryImpl implements MainRepository {
     final db = _databaseService.db;
 
     final wineRows = await db.query('wines', orderBy: 'name ASC');
+
+    // Load all bottle size entries grouped by wine_id
+    final bottleRows = await db.query('wine_bottles');
+    final bottlesByWineId = <String, List<WineBottle>>{};
+    for (final row in bottleRows) {
+      final wineId = row['wine_id'] as String;
+      (bottlesByWineId[wineId] ??= []).add(WineBottle.fromMap(Map<String, dynamic>.from(row)));
+    }
 
     // Fetch all assigned positions with their cabinet/shelf names in one query.
     final posRows = await db.rawQuery('''
@@ -87,7 +110,7 @@ class MainRepositoryImpl implements MainRepository {
       (grouped[wineId] ??= {})[key] = [...(grouped[wineId]?[key] ?? []), row['position_index'] as int];
     }
 
-    // Build the same "Cabinet > Shelf > Spot 1, 2" ; "..." 
+    // Build the same "Cabinet > Shelf > Spot 1, 2" ; "..."
     final locations = grouped.map((wineId, shelfMap) {
       final parts = shelfMap.entries
           .map((e) => '${e.key} > Spot ${e.value.join(', ')}')
@@ -96,7 +119,19 @@ class MainRepositoryImpl implements MainRepository {
       return MapEntry(wineId, parts.join(' ; '));
     });
 
-    return wineRows.map((row) => _rowToWineModel(row, locations[row['id'] as String])).toList();
+    return wineRows.map((row) {
+      final wineId = row['id'] as String;
+      var loc = locations[wineId];
+      if (loc != null) {
+        final assignedCount = grouped[wineId]
+                ?.values
+                .fold<int>(0, (sum, spots) => sum + spots.length) ??
+            0;
+        final quantity = (row['quantity'] as int?) ?? 1;
+        if (assignedCount < quantity) loc = '$loc ; Unassigned';
+      }
+      return _rowToWineModel(row, loc, bottlesByWineId[wineId]);
+    }).toList();
   }
 
   @override
@@ -109,10 +144,40 @@ class MainRepositoryImpl implements MainRepository {
       'UPDATE positions SET wine_id = NULL WHERE wine_id = ?', [wineId],
     );
     await _databaseService.db.delete('wines', where: 'id = ?', whereArgs: [wineId]);
-    _syncService.syncOnClose(); // fire-and-forget
+    _syncService.syncOnClose();
   }
 
-  WineModel _rowToWineModel(Map<String, dynamic> row, [String? cellarLocation]) {
+  @override
+  Future<List<PurchaseRecord>> getPurchaseHistory(String wineId) async {
+    _assertInitialized();
+    final rows = await _databaseService.db.query(
+      'purchase_history',
+      where: 'wine_id = ?',
+      whereArgs: [wineId],
+      orderBy: 'purchased_at DESC',
+    );
+    return rows.map((r) => PurchaseRecord.fromMap(Map<String, dynamic>.from(r))).toList();
+  }
+
+  @override
+  Future<void> savePurchaseRecord(PurchaseRecord record) async {
+    _assertInitialized();
+    await _databaseService.db.insert(
+      'purchase_history',
+      record.toMap(),
+      conflictAlgorithm: ConflictAlgorithm.replace,
+    );
+    _syncService.syncOnClose();
+  }
+
+  @override
+  Future<void> deletePurchaseRecord(String recordId) async {
+    _assertInitialized();
+    await _databaseService.db.delete('purchase_history', where: 'id = ?', whereArgs: [recordId]);
+    _syncService.syncOnClose();
+  }
+
+  WineModel _rowToWineModel(Map<String, dynamic> row, [String? cellarLocation, List<WineBottle>? bottles]) {
     return WineModel.fromJson({
       'id': row['id'],
       'name': row['name'],
@@ -131,6 +196,7 @@ class MainRepositoryImpl implements MainRepository {
       'imageUrl': row['imageUrl'],
       'prices': row['prices'] != null ? jsonDecode(row['prices'] as String) : null,
       'pairings': row['pairings'] != null ? jsonDecode(row['pairings'] as String) : null,
-    });
+      'grapes': row['grapes'] != null ? jsonDecode(row['grapes'] as String) : null,
+    }).copyWith(bottles: bottles);
   }
 }

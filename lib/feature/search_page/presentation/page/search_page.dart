@@ -13,10 +13,13 @@ import 'package:home_wine/core/widget/text_field.dart';
 import 'package:home_wine/feature/main_page/presentation/cubit/main_cubit.dart';
 import 'package:home_wine/feature/main_page/presentation/cubit/main_state.dart';
 import 'package:home_wine/feature/search_page/presentation/page/wine_detail_page.dart';
+import 'package:home_wine/feature/wine/data/models/wine_bottle.dart';
 import 'package:home_wine/feature/wine/data/models/wine_model.dart';
 import 'package:home_wine/feature/wine/data/repository/wine_repository.dart';
 import 'package:home_wine/feature/wine/presentation/cubit/wine_search_cubit.dart';
 import 'package:home_wine/feature/wine/presentation/cubit/wine_search_state.dart';
+import 'package:home_wine/feature/wishlist_page/presentation/cubit/wishlist_cubit.dart';
+import 'package:home_wine/feature/wishlist_page/presentation/cubit/wishlist_state.dart';
 
 @RoutePage()
 class SearchPage extends StatefulWidget {
@@ -241,6 +244,36 @@ class _SearchWineCard extends StatelessWidget {
                         ),
                       ),
                     ),
+                  Positioned(
+                    top: 8,
+                    left: 8,
+                    child: BlocBuilder<WishlistCubit, WishlistState>(
+                      builder: (context, state) {
+                        final wishlisted = context.read<WishlistCubit>().isWishlisted(wine.id);
+                        return GestureDetector(
+                          onTap: () => context.read<WishlistCubit>().toggle(wine),
+                          child: Container(
+                            padding: const EdgeInsets.all(6),
+                            decoration: BoxDecoration(
+                              color: Colors.white.withOpacity(0.9),
+                              shape: BoxShape.circle,
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withOpacity(0.08),
+                                  blurRadius: 4,
+                                ),
+                              ],
+                            ),
+                            child: Icon(
+                              wishlisted ? Icons.bookmark : Icons.bookmark_border,
+                              color: AppColors.darkBlue,
+                              size: 18,
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                  ),
                 ],
               ),
             ),
@@ -313,30 +346,49 @@ class _SearchWineCard extends StatelessWidget {
                                 padding: EdgeInsets.zero,
                                 constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
                                 onPressed: () async {
-                                  final confirmed = await _confirmQuantityAction(
-                                    context,
-                                    isIncrease: true,
-                                    count: 1,
+                                  final w = cellarWine!;
+                                  final picked = await showDialog<({String bottleSize, int quantity})>(
+                                    context: context,
+                                    builder: (ctx) => const BottleSizeQuantityPickerDialog(),
                                   );
-                                  if (!confirmed || !context.mounted) return;
-                                  if (cellarWine!.cellarLocation != null &&
-                                      cellarWine.cellarLocation!.isNotEmpty) {
-                                    final res = await showDialog<Map<String, dynamic>>(
-                                      context: context,
-                                      builder: (ctx) => StorageLocationDialog(
-                                        wine: cellarWine!.copyWith(quantity: quantity + 1),
-                                      ),
-                                    );
-                                    if (res != null && context.mounted) {
-                                      final loc = res['location'] as String;
-                                      final qty = res['quantity'] as int;
-                                      context.read<MainCubit>().saveWine(
-                                        cellarWine.copyWith(cellarLocation: loc, quantity: qty),
-                                      );
-                                    }
+                                  if (picked == null || !context.mounted) return;
+                                  final res = await showDialog<Map<String, dynamic>>(
+                                    context: context,
+                                    builder: (ctx) => StorageLocationDialog(
+                                      wine: w.copyWith(quantity: w.quantity + picked.quantity),
+                                    ),
+                                  );
+                                  if (res == null || !context.mounted) return;
+                                  final existingBottles = w.bottles?.isNotEmpty == true
+                                      ? w.bottles!
+                                      : [WineBottle(
+                                          id: '${w.id}_default',
+                                          wineId: w.id,
+                                          bottleSize: '750ml',
+                                          quantity: w.quantity,
+                                        )];
+                                  final existing = existingBottles
+                                      .where((b) => b.bottleSize == picked.bottleSize)
+                                      .firstOrNull;
+                                  final List<WineBottle> newBottles;
+                                  if (existing != null) {
+                                    newBottles = existingBottles
+                                        .map((b) => b.bottleSize == picked.bottleSize
+                                            ? b.copyWith(quantity: b.quantity + picked.quantity)
+                                            : b)
+                                        .toList();
                                   } else {
-                                    context.read<MainCubit>().updateQuantity(cellarWine, quantity + 1);
+                                    newBottles = [
+                                      ...existingBottles,
+                                      WineBottle(
+                                        id: '${w.id}_${picked.bottleSize}_${DateTime.now().microsecondsSinceEpoch}',
+                                        wineId: w.id,
+                                        bottleSize: picked.bottleSize,
+                                        quantity: picked.quantity,
+                                      ),
+                                    ];
                                   }
+                                  context.read<MainCubit>().updateBottleSizes(w, newBottles);
                                 },
                               ),
                             ],
@@ -353,19 +405,35 @@ class _SearchWineCard extends StatelessWidget {
                             wineToAdd = wine;
                           }
 
-                          if (context.mounted) {
-                            final res = await showDialog<Map<String, dynamic>>(
-                              context: context,
-                              builder: (ctx) => StorageLocationDialog(wine: wineToAdd.copyWith(quantity: 1)),
+                          if (!context.mounted) return;
+                          final picked = await showDialog<({String bottleSize, int quantity})>(
+                            context: context,
+                            builder: (ctx) => const BottleSizeQuantityPickerDialog(),
+                          );
+                          if (picked == null || !context.mounted) return;
+
+                          final res = await showDialog<Map<String, dynamic>>(
+                            context: context,
+                            builder: (ctx) => StorageLocationDialog(wine: wineToAdd.copyWith(quantity: picked.quantity)),
+                          );
+                          if (res != null && context.mounted) {
+                            final loc = res['location'] as String;
+                            final qty = res['quantity'] as int;
+                            context.read<MainCubit>().saveWine(
+                              wineToAdd.copyWith(
+                                cellarLocation: loc,
+                                quantity: qty,
+                                bottles: [
+                                  WineBottle(
+                                    id: '${wineToAdd.id}_${DateTime.now().microsecondsSinceEpoch}',
+                                    wineId: wineToAdd.id,
+                                    bottleSize: picked.bottleSize,
+                                    quantity: qty,
+                                  ),
+                                ],
+                              ),
                             );
-                            if (res != null && context.mounted) {
-                              final loc = res['location'] as String;
-                              final qty = res['quantity'] as int;
-                              context.read<MainCubit>().saveWine(
-                                wineToAdd.copyWith(cellarLocation: loc, quantity: qty),
-                              );
-                              AppSnackBar.show(context, message: 'Added to cellar! 🍷');
-                            }
+                            AppSnackBar.show(context, message: 'Added to cellar! 🍷');
                           }
                         },
                         child: Container(

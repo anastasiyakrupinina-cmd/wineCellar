@@ -39,12 +39,19 @@ class DatabaseService {
 
     _db = await openDatabase(
       _dbPath!,
-      version: 2,
+      version: 5,
       onConfigure: (db) async {
         await db.execute('PRAGMA foreign_keys = ON');
       },
       onCreate: _onCreate,
+      onUpgrade: _onUpgrade,
     );
+  }
+
+  Future<void> _onUpgrade(Database db, int oldVersion, int newVersion) async {
+    if (oldVersion < 5) {
+      await db.execute('ALTER TABLE wines ADD COLUMN grapes TEXT');
+    }
   }
 
   Future<void> close() async {
@@ -72,7 +79,7 @@ class DatabaseService {
         imageUrl TEXT,
         prices TEXT,
         pairings TEXT,
-        updatedAt INTEGER
+        grapes TEXT
       )
     ''');
 
@@ -97,6 +104,49 @@ class DatabaseService {
         shelf_id       TEXT NOT NULL REFERENCES shelves(id) ON DELETE CASCADE,
         position_index INTEGER NOT NULL,
         wine_id        TEXT
+      )
+    ''');
+
+    await db.execute('''
+      CREATE TABLE wine_bottles (
+        id          TEXT PRIMARY KEY,
+        wine_id     TEXT NOT NULL REFERENCES wines(id) ON DELETE CASCADE,
+        bottle_size TEXT NOT NULL,
+        quantity    INTEGER NOT NULL DEFAULT 1
+      )
+    ''');
+
+    await db.execute('''
+      CREATE TABLE purchase_history (
+        id           TEXT PRIMARY KEY,
+        wine_id      TEXT NOT NULL REFERENCES wines(id) ON DELETE CASCADE,
+        bottle_size  TEXT,
+        quantity     INTEGER NOT NULL DEFAULT 1,
+        price        REAL NOT NULL,
+        currency     TEXT NOT NULL DEFAULT 'USD',
+        purchased_at INTEGER NOT NULL,
+        shop_name    TEXT,
+        shop_location TEXT
+      )
+    ''');
+
+    await db.execute('''
+      CREATE TABLE wishlist (
+        id            TEXT PRIMARY KEY,
+        name          TEXT NOT NULL,
+        vintage       INTEGER,
+        type          TEXT,
+        winery        TEXT,
+        region        TEXT,
+        country       TEXT,
+        averageRating REAL,
+        ratingsCount  INTEGER,
+        description   TEXT,
+        alcoholContent TEXT,
+        imageUrl      TEXT,
+        prices        TEXT,
+        pairings      TEXT,
+        added_at      INTEGER NOT NULL
       )
     ''');
   }

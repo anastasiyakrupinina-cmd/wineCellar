@@ -33,6 +33,10 @@ import 'package:home_wine/feature/wine/presentation/cubit/wine_details_cubit.dar
     as _i616;
 import 'package:home_wine/feature/wine/presentation/cubit/wine_search_cubit.dart'
     as _i984;
+import 'package:home_wine/feature/wishlist_page/data/repository/wishlist_repository.dart'
+    as _i742;
+import 'package:home_wine/feature/wishlist_page/presentation/cubit/wishlist_cubit.dart'
+    as _i391;
 import 'package:injectable/injectable.dart' as _i526;
 import 'package:shared_preferences/shared_preferences.dart' as _i460;
 
@@ -91,6 +95,12 @@ extension GetItInjectableX on _i174.GetIt {
     );
     gh.factory<_i87.ManageStorageCubit>(
       () => _i87.ManageStorageCubit(gh<_i997.ProfileRepository>()),
+    );
+    gh.lazySingleton<_i742.WishlistRepository>(
+      () => _i742.WishlistRepositoryImpl(gh<_i886.DatabaseService>()),
+    );
+    gh.lazySingleton<_i391.WishlistCubit>(
+      () => _i391.WishlistCubit(gh<_i742.WishlistRepository>()),
     );
     return this;
   }

@@ -7,7 +7,6 @@ import 'package:home_wine/app_settings_cubit.dart';
 import 'package:home_wine/core/colors/app_colors.dart';
 import 'package:home_wine/core/dependencies/get_it.dart';
 import 'package:home_wine/core/style/app_text_style.dart';
-import 'package:home_wine/core/widget/app_snackbar.dart';
 import 'package:home_wine/core/widget/button.dart';
 import 'package:home_wine/core/widget/text_field.dart';
 import 'package:home_wine/feature/main_page/presentation/cubit/main_cubit.dart';
@@ -15,6 +14,7 @@ import 'package:home_wine/feature/main_page/presentation/cubit/main_state.dart';
 import 'package:home_wine/feature/main_page/presentation/widget/app_bar.dart';
 import 'package:home_wine/feature/main_page/presentation/widget/main_list.dart';
 import 'package:home_wine/feature/search_page/presentation/page/wine_detail_page.dart';
+import 'package:home_wine/feature/wine/data/models/wine_bottle.dart';
 import 'package:home_wine/feature/wine/data/models/wine_model.dart';
 
 @RoutePage()
@@ -89,8 +89,13 @@ class _MainPageState extends State<MainPage> with AutoRouteAwareStateMixin<MainP
         locations.add('Unassigned');
       }
 
-      final spotLocationsCount = locations.where((loc) => loc.contains('Spot ')).length;
-      final unassignedRemainder = (wine.quantity - spotLocationsCount).clamp(0, wine.quantity);
+      final assignedSpotCount = locations
+          .where((loc) => loc.contains('Spot '))
+          .fold<int>(0, (count, loc) {
+            final spotStr = loc.split('Spot ').last;
+            return count + spotStr.split(',').where((s) => s.trim().isNotEmpty).length;
+          });
+      final unassignedRemainder = (wine.quantity - assignedSpotCount).clamp(0, wine.quantity);
 
       for (var loc in locations) {
         String cabinet = 'Unassigned';
@@ -438,7 +443,10 @@ class _AddWineForm extends StatefulWidget {
 }
 
 class _AddWineFormState extends State<_AddWineForm> {
+  final _formKey = GlobalKey<FormState>();
   final _nameController = TextEditingController();
+  final _wineryController = TextEditingController();
+  final _grapesController = TextEditingController();
   final _regionController = TextEditingController();
   final _countryController = TextEditingController();
   final _vintageController = TextEditingController();
@@ -446,6 +454,9 @@ class _AddWineFormState extends State<_AddWineForm> {
   final _descriptionController = TextEditingController();
   final _noticeController = TextEditingController();
   String _selectedType = 'Red';
+  String _selectedBottleSize = '750ml';
+  bool _isCustomBottleSize = false;
+  final _customBottleSizeController = TextEditingController();
   int _quantity = 1;
   String? _cellarLocation;
   late final String _wineId;
@@ -459,6 +470,8 @@ class _AddWineFormState extends State<_AddWineForm> {
       final wine = widget.wineToEdit!;
       _wineId = wine.id;
       _nameController.text = wine.name;
+      _wineryController.text = wine.winery ?? '';
+      _grapesController.text = wine.grapes?.join(', ') ?? '';
       _regionController.text = wine.region ?? '';
       _countryController.text = wine.country ?? '';
       _vintageController.text = wine.vintage?.toString() ?? '';
@@ -476,12 +489,15 @@ class _AddWineFormState extends State<_AddWineForm> {
   @override
   void dispose() {
     _nameController.dispose();
+    _wineryController.dispose();
+    _grapesController.dispose();
     _regionController.dispose();
     _countryController.dispose();
     _vintageController.dispose();
     _priceController.dispose();
     _descriptionController.dispose();
     _noticeController.dispose();
+    _customBottleSizeController.dispose();
     super.dispose();
   }
 
@@ -491,7 +507,9 @@ class _AddWineFormState extends State<_AddWineForm> {
     return GestureDetector(
       behavior: HitTestBehavior.translucent,
       onTap: () => FocusScope.of(context).unfocus(),
-      child: SingleChildScrollView(
+      child: Form(
+        key: _formKey,
+        child: SingleChildScrollView(
         physics: const ClampingScrollPhysics(),
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -517,7 +535,16 @@ class _AddWineFormState extends State<_AddWineForm> {
               ],
             ),
             const SizedBox(height: 24),
-            AppTextField(label: 'Wine Name *', hint: 'e.g. Chateau Margaux', controller: _nameController),
+            AppTextField(
+              label: 'Wine Name *',
+              hint: 'e.g. Chateau Margaux',
+              controller: _nameController,
+              validator: (v) => v == null || v.trim().isEmpty ? 'Required' : null,
+            ),
+            const SizedBox(height: 16),
+            AppTextField(label: 'Winery', hint: 'e.g. Château Margaux', controller: _wineryController),
+            const SizedBox(height: 16),
+            AppTextField(label: 'Grape Varieties', hint: 'e.g. Cabernet Sauvignon, Merlot', controller: _grapesController),
             const SizedBox(height: 16),
             Text('Type', style: AppTextStyles.caption.copyWith(fontWeight: FontWeight.bold)),
             const SizedBox(height: 8),
@@ -573,7 +600,7 @@ class _AddWineFormState extends State<_AddWineForm> {
                 const SizedBox(width: 16),
                 Expanded(
                   child: AppTextField(
-                    label: 'Price (\$)',
+                    label: 'Price (€)',
                     hint: 'e.g. 150',
                     controller: _priceController,
                     keyboardType: const TextInputType.numberWithOptions(decimal: true),
@@ -581,6 +608,60 @@ class _AddWineFormState extends State<_AddWineForm> {
                 ),
               ],
             ),
+            const SizedBox(height: 16),
+            Text('Bottle Size', style: AppTextStyles.caption.copyWith(fontWeight: FontWeight.bold)),
+            const SizedBox(height: 8),
+            SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: Row(
+                children: [
+                  ...WineBottle.standardSizes.map((size) {
+                    final isSelected = !_isCustomBottleSize && _selectedBottleSize == size;
+                    return Padding(
+                      padding: const EdgeInsets.only(right: 8),
+                      child: ChoiceChip(
+                        label: Text(size),
+                        selected: isSelected,
+                        onSelected: (_) => setState(() {
+                          _isCustomBottleSize = false;
+                          _selectedBottleSize = size;
+                        }),
+                        selectedColor: AppColors.darkBlue,
+                        backgroundColor: AppColors.lightBlue.withOpacity(0.1),
+                        labelStyle: AppTextStyles.caption.copyWith(
+                          color: isSelected ? Colors.white : AppColors.darkBlue,
+                        ),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        showCheckmark: false,
+                      ),
+                    );
+                  }),
+                  Padding(
+                    padding: const EdgeInsets.only(right: 8),
+                    child: ChoiceChip(
+                      label: const Text('Custom'),
+                      selected: _isCustomBottleSize,
+                      onSelected: (_) => setState(() => _isCustomBottleSize = true),
+                      selectedColor: AppColors.darkBlue,
+                      backgroundColor: AppColors.lightBlue.withOpacity(0.1),
+                      labelStyle: AppTextStyles.caption.copyWith(
+                        color: _isCustomBottleSize ? Colors.white : AppColors.darkBlue,
+                      ),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      showCheckmark: false,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            if (_isCustomBottleSize) ...[
+              const SizedBox(height: 8),
+              AppTextField(
+                label: '',
+                hint: 'e.g. 500ml',
+                controller: _customBottleSizeController,
+              ),
+            ],
             const SizedBox(height: 24),
             AppTextField(
               label: 'Description & Notes',
@@ -681,13 +762,20 @@ class _AddWineFormState extends State<_AddWineForm> {
             AppButton(
               text: 'Save Wine',
               onPressed: () {
-                if (_nameController.text.trim().isEmpty) {
-                  AppSnackBar.show(context, message: 'Please enter a wine name', isError: true);
-                  return;
-                }
+                if (!_formKey.currentState!.validate()) return;
+                final bottleSize = _isCustomBottleSize
+                    ? _customBottleSizeController.text.trim()
+                    : _selectedBottleSize;
+                final resolvedSize = bottleSize.isEmpty ? '750ml' : bottleSize;
+                final grapesRaw = _grapesController.text.trim();
+                final grapesList = grapesRaw.isNotEmpty
+                    ? grapesRaw.split(',').map((g) => g.trim()).where((g) => g.isNotEmpty).toList()
+                    : null;
                 final newWine = WineModel(
                   id: _wineId,
                   name: _nameController.text.trim(),
+                  winery: _wineryController.text.trim().isNotEmpty ? _wineryController.text.trim() : null,
+                  grapes: grapesList,
                   type: _selectedType,
                   country: _countryController.text.trim(),
                   region: _regionController.text.trim(),
@@ -696,8 +784,14 @@ class _AddWineFormState extends State<_AddWineForm> {
                   notice: _noticeController.text.trim().isEmpty ? null : _noticeController.text.trim(),
                   quantity: _quantity,
                   cellarLocation: _cellarLocation,
-                  
-                  
+                  bottles: [
+                    WineBottle(
+                      id: '${_wineId}_${resolvedSize}_${DateTime.now().microsecondsSinceEpoch}',
+                      wineId: _wineId,
+                      bottleSize: resolvedSize,
+                      quantity: _quantity,
+                    ),
+                  ],
                 );
                 widget.cubit.saveWine(newWine);
                 Navigator.pop(context);
@@ -706,6 +800,7 @@ class _AddWineFormState extends State<_AddWineForm> {
           ],
         ),
       ),
-    );
+    ),
+  );
   }
 }

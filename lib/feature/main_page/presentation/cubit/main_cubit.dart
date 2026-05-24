@@ -1,6 +1,7 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:home_wine/feature/main_page/data/reposiotry/main_repository.dart';
 import 'package:home_wine/feature/profile_page/data/repository/profile_repository.dart';
+import 'package:home_wine/feature/wine/data/models/wine_bottle.dart';
 import 'package:home_wine/feature/wine/data/models/wine_model.dart';
 import 'package:injectable/injectable.dart';
 
@@ -16,7 +17,7 @@ class MainCubit extends Cubit<MainState> {
   Future<void> loadWines() async {
     if (isClosed) return;
 
-    
+
     try {
       final localWines = await _repository.getLocalWines();
       if (localWines.isNotEmpty) {
@@ -28,12 +29,12 @@ class MainCubit extends Cubit<MainState> {
       if (!isClosed) emit(MainLoading());
     }
 
-    
+
     try {
       final remoteWines = await _repository.getRemoteWines();
       if (!isClosed) emit(MainLoaded(remoteWines));
     } catch (e) {
-      
+
       if (state is! MainLoaded && !isClosed) {
         emit(MainError(e.toString()));
       }
@@ -42,7 +43,7 @@ class MainCubit extends Cubit<MainState> {
 
   Future<void> saveWine(WineModel wine) async {
     try {
-      
+
       if (state is MainLoaded) {
         final currentWines = List<WineModel>.from((state as MainLoaded).wines);
         final index = currentWines.indexWhere((w) => w.id == wine.id);
@@ -54,8 +55,8 @@ class MainCubit extends Cubit<MainState> {
         emit(MainLoaded(currentWines));
       }
 
-      await _repository.saveWine(wine); //INSERT → triggers syncOnClose() fire-and-forget
-      loadWines();  // SELECT starts immediately after -> WAL 
+      await _repository.saveWine(wine);
+      loadWines();
     } catch (e) {
       if (!isClosed) emit(MainError(e.toString()));
     }
@@ -69,7 +70,6 @@ class MainCubit extends Cubit<MainState> {
         emit(MainLoaded(currentWines));
       }
 
-      // ON DELETE SET NULL on positions.wine_id clears spots automatically.
       await _repository.deleteWine(wineId);
       loadWines();
     } catch (e) {
@@ -90,8 +90,37 @@ class MainCubit extends Cubit<MainState> {
         await _profileRepository.freeSpots(wine.id, -diff);
       }
 
-      // cellarLocation is recomputed from positions by loadWines() below.
       final updatedWine = wine.copyWith(quantity: newQuantity);
+
+      if (state is MainLoaded) {
+        final currentWines = List<WineModel>.from((state as MainLoaded).wines);
+        final index = currentWines.indexWhere((w) => w.id == wine.id);
+        if (index != -1) currentWines[index] = updatedWine;
+        emit(MainLoaded(currentWines));
+      }
+
+      await _repository.saveWine(updatedWine);
+      loadWines();
+    } catch (e) {
+      if (!isClosed) emit(MainError(e.toString()));
+    }
+  }
+
+  Future<void> updateBottleSizes(WineModel wine, List<WineBottle> newBottles) async {
+    try {
+      final newTotal = newBottles.fold(0, (s, b) => s + b.quantity);
+
+      if (newTotal <= 0) {
+        await deleteWine(wine.id);
+        return;
+      }
+
+      final oldTotal = wine.quantity;
+      if (newTotal < oldTotal) {
+        await _profileRepository.freeSpots(wine.id, oldTotal - newTotal);
+      }
+
+      final updatedWine = wine.copyWith(bottles: newBottles, quantity: newTotal);
 
       if (state is MainLoaded) {
         final currentWines = List<WineModel>.from((state as MainLoaded).wines);

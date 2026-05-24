@@ -8,6 +8,7 @@ import 'package:home_wine/core/router/app_router.dart';
 import 'package:home_wine/core/storage/storage_service.dart';
 import 'package:home_wine/core/sync/ucloud_sync_service.dart';
 import 'package:home_wine/core/theme/app_theme.dart';
+import 'package:home_wine/feature/wishlist_page/presentation/cubit/wishlist_cubit.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -31,9 +32,9 @@ class _MyAppState extends State<MyApp> {
     super.initState();
     _appRouter = AppRouter();
     _lifecycleListener = AppLifecycleListener(
-      onPause: _onAppBackground,   // Android: app goes to background
+      onPause: _onAppBackground,   // Android goes to background
       onDetach: _onAppBackground,  // Android app is being closed
-      onHide: _onAppBackground,    // Windows: window minimized or hidden
+      onHide: _onAppBackground,    // Windows minimized or hidden
     );
   }
 
@@ -58,8 +59,11 @@ class _MyAppState extends State<MyApp> {
 
   @override
   Widget build(BuildContext context) {
-    return BlocProvider(
-      create: (_) => AppSettingsCubit(getIt<StorageService>()),
+    return MultiBlocProvider(
+      providers: [
+        BlocProvider(create: (_) => AppSettingsCubit(getIt<StorageService>())),
+        BlocProvider.value(value: getIt<WishlistCubit>()),
+      ],
       child: MaterialApp.router(
         title: 'Home Wine',
         theme: AppTheme.lightTheme,

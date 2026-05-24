@@ -70,14 +70,13 @@ class MainWineList extends StatelessWidget {
     if (selectedCabinet == null) return const SliverToBoxAdapter(child: SizedBox.shrink());
 
     return SliverPadding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8), 
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 2),
       sliver: SliverToBoxAdapter(
         child: InkWell(
-          
           borderRadius: BorderRadius.circular(8),
           onTap: () => onCabinetSelected(null),
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 12), 
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
             child: Row(
               mainAxisSize: MainAxisSize.min, 
               children: [
@@ -128,6 +127,7 @@ class MainWineList extends StatelessWidget {
     
     final cabinetData = groupedWines[selectedCabinet];
     if (cabinetData == null) return const SliverToBoxAdapter(child: SizedBox.shrink());
+    final isUnassigned = selectedCabinet == 'Unassigned';
 
     return SliverList(
       delegate: SliverChildBuilderDelegate((context, index) {
@@ -135,7 +135,9 @@ class MainWineList extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             _buildCabinetHeader(selectedCabinet!),
-            ...cabinetData.entries.map((s) => _buildShelfSection(s.key, s.value, onWineLongPress)),
+            ...cabinetData.entries.map(
+              (s) => _buildShelfSection(s.key, s.value, onWineLongPress, isUnassigned: isUnassigned),
+            ),
             const SizedBox(height: 20),
           ],
         );
@@ -158,7 +160,9 @@ class MainWineList extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             _buildCabinetHeader(cabinetEntry.key),
-            ...cabinetEntry.value.entries.map((s) => _buildShelfSection(s.key, s.value, onWineLongPress)),
+            ...cabinetEntry.value.entries.map(
+              (s) => _buildShelfSection(s.key, s.value, onWineLongPress),
+            ),
             const SizedBox(height: 20),
           ],
         );
@@ -227,7 +231,12 @@ class MainWineList extends StatelessWidget {
     );
   }
 
-  Widget _buildShelfSection(String shelfName, List<WineModel> wines, Function(WineModel) onWineLongPress) {
+  Widget _buildShelfSection(
+    String shelfName,
+    List<WineModel> wines,
+    Function(WineModel) onWineLongPress, {
+    bool isUnassigned = false,
+  }) {
     final int totalBottles = wines.fold(0, (sum, w) => sum + w.quantity);
 
     return Column(
@@ -260,7 +269,12 @@ class MainWineList extends StatelessWidget {
               ],
             ),
           ),
-        _ShelfView(wines: wines, onWineLongPress: onWineLongPress, totalWineCountById: totalWineCountById),
+        _ShelfView(
+          wines: wines,
+          onWineLongPress: onWineLongPress,
+          totalWineCountById: totalWineCountById,
+          isUnassigned: isUnassigned,
+        ),
         const SizedBox(height: 16),
       ],
     );
@@ -273,36 +287,52 @@ class _ShelfView extends StatelessWidget {
   final List<WineModel> wines;
   final Function(WineModel) onWineLongPress;
   final Map<String, int> totalWineCountById;
-  const _ShelfView({required this.wines, required this.onWineLongPress, required this.totalWineCountById});
+  final bool isUnassigned;
+
+  const _ShelfView({
+    required this.wines,
+    required this.onWineLongPress,
+    required this.totalWineCountById,
+    this.isUnassigned = false,
+  });
 
   @override
   Widget build(BuildContext context) {
+    if (isUnassigned) {
+      return Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 12),
+        child: Wrap(
+          spacing: 8,
+          runSpacing: 20,
+          children: List.generate(wines.length, (index) => SizedBox(
+            width: 100,
+            child: _ShelfBottle(
+              wine: wines[index],
+              index: index,
+              totalWineCount: totalWineCountById[wines[index].id] ?? wines[index].quantity,
+              onLongPress: () => onWineLongPress(wines[index]),
+              showShelf: false,
+            ),
+          )),
+        ),
+      );
+    }
+
     return SizedBox(
       height: 220,
-      child: Stack(
-        children: [
-          ListView.builder(
-            padding: const EdgeInsets.symmetric(horizontal: 12),
-            scrollDirection: Axis.horizontal,
-            itemCount: wines.length,
-            itemBuilder: (context, index) => Column(
-              children: [
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 0),
-                  child: SizedBox(
-                    width: 100,
-                    child: _ShelfBottle(
-                      wine: wines[index],
-                      index: index,
-                      totalWineCount: totalWineCountById[wines[index].id] ?? wines[index].quantity,
-                      onLongPress: () => onWineLongPress(wines[index]),
-                    ),
-                  ),
-                ),
-              ],
-            ),
+      child: ListView.builder(
+        padding: const EdgeInsets.symmetric(horizontal: 12),
+        scrollDirection: Axis.horizontal,
+        itemCount: wines.length,
+        itemBuilder: (context, index) => SizedBox(
+          width: 100,
+          child: _ShelfBottle(
+            wine: wines[index],
+            index: index,
+            totalWineCount: totalWineCountById[wines[index].id] ?? wines[index].quantity,
+            onLongPress: () => onWineLongPress(wines[index]),
           ),
-        ],
+        ),
       ),
     );
   }
@@ -313,7 +343,15 @@ class _ShelfBottle extends StatelessWidget {
   final int index;
   final int totalWineCount;
   final VoidCallback? onLongPress;
-  const _ShelfBottle({required this.wine, required this.totalWineCount, this.index = 0, this.onLongPress});
+  final bool showShelf;
+
+  const _ShelfBottle({
+    required this.wine,
+    required this.totalWineCount,
+    this.index = 0,
+    this.onLongPress,
+    this.showShelf = true,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -375,8 +413,10 @@ class _ShelfBottle extends StatelessWidget {
               ],
             ),
           ),
-          const SizedBox(height: 6),
-          Container(height: 15, decoration: BoxDecoration(color: AppColors.lightBlue.withValues(alpha: 0.1))),
+          if (showShelf) ...[
+            const SizedBox(height: 6),
+            Container(height: 15, decoration: BoxDecoration(color: AppColors.lightBlue.withValues(alpha: 0.1))),
+          ],
         ],
       ),
     );
