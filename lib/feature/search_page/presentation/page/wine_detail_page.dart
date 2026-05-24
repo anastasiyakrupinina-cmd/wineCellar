@@ -228,34 +228,37 @@ class _WineDetailPageState extends State<WineDetailPage> {
   Widget _buildAddToCellarButton(BuildContext context, WineModel wine) {
     return AppButton(
       text: 'Add to Cellar',
-      onPressed: () async {
-        final picked = await showDialog<({String bottleSize, int quantity})>(
-          context: context,
-          builder: (ctx) => const BottleSizeQuantityPickerDialog(),
-        );
-        if (picked == null || !context.mounted) return;
-
-        final res = await showDialog<Map<String, dynamic>>(
-          context: context,
-          builder: (ctx) => StorageLocationDialog(wine: wine.copyWith(quantity: picked.quantity)),
-        );
-        if (res != null && context.mounted) {
-          final loc = res['location'] as String;
-          final qty = res['quantity'] as int;
-          final bottles = [
-            WineBottle(
-              id: '${wine.id}_${DateTime.now().microsecondsSinceEpoch}',
-              wineId: wine.id,
-              bottleSize: picked.bottleSize,
-              quantity: qty,
-            ),
-          ];
-          await context.read<MainCubit>().saveWine(
-            wine.copyWith(cellarLocation: loc, quantity: qty, bottles: bottles),
-          );
-        }
-      },
+      onPressed: () => _addToCellar(context, wine),
     );
+  }
+
+  Future<void> _addToCellar(BuildContext context, WineModel wine) async {
+    final picked = await showDialog<({String bottleSize, int quantity})>(
+      context: context,
+      builder: (ctx) => const BottleSizeQuantityPickerDialog(),
+    );
+    if (picked == null || !context.mounted) return;
+
+    final bottles = [
+      WineBottle(
+        id: '${wine.id}_${DateTime.now().microsecondsSinceEpoch}',
+        wineId: wine.id,
+        bottleSize: picked.bottleSize,
+        quantity: picked.quantity,
+      ),
+    ];
+
+    final res = await showDialog<Map<String, dynamic>>(
+      context: context,
+      builder: (ctx) => StorageLocationDialog(wine: wine.copyWith(quantity: picked.quantity)),
+    );
+    if (res != null && context.mounted) {
+      final loc = res['location'] as String;
+      final qty = res['quantity'] as int;
+      await context.read<MainCubit>().saveWine(
+        wine.copyWith(cellarLocation: loc, quantity: qty, bottles: bottles),
+      );
+    }
   }
 
   Widget _buildSliverAppBar(WineModel wine) {
@@ -697,33 +700,7 @@ class _WineDetailPageState extends State<WineDetailPage> {
 
         return AppButton(
           text: 'Add to Cellar',
-          onPressed: () async {
-            final picked = await showDialog<({String bottleSize, int quantity})>(
-              context: context,
-              builder: (ctx) => const BottleSizeQuantityPickerDialog(),
-            );
-            if (picked == null || !context.mounted) return;
-
-            final res = await showDialog<Map<String, dynamic>>(
-              context: context,
-              builder: (ctx) => StorageLocationDialog(wine: wine.copyWith(quantity: picked.quantity)),
-            );
-            if (res != null && context.mounted) {
-              final loc = res['location'] as String;
-              final qty = res['quantity'] as int;
-              final bottles = [
-                WineBottle(
-                  id: '${wine.id}_${DateTime.now().microsecondsSinceEpoch}',
-                  wineId: wine.id,
-                  bottleSize: picked.bottleSize,
-                  quantity: qty,
-                ),
-              ];
-              await context.read<MainCubit>().saveWine(
-                wine.copyWith(cellarLocation: loc, quantity: qty, bottles: bottles),
-              );
-            }
-          },
+          onPressed: () => _addToCellar(context, wine),
         );
       },
     );
@@ -1563,7 +1540,6 @@ class _LogPurchaseDialogState extends State<_LogPurchaseDialog> {
                       currency: _currencyController.text.trim().isEmpty ? '€' : _currencyController.text.trim(),
                       purchasedAt: _date,
                       shopName: _shopNameController.text.trim().isEmpty ? null : _shopNameController.text.trim(),
-                      shopLocation: null,
                     );
                     Navigator.pop(context, record);
                   },
@@ -2058,6 +2034,11 @@ class _StorageLocationDialogState extends State<StorageLocationDialog> {
   }
 
   Future<void> _saveLocation() async {
+    // Ensure the wine is in cellar_wines before positions reference it.
+    // For existing cellar wines this is a no-op (INSERT IGNORE + UPDATE same values).
+    await getIt<MainRepository>().saveWine(widget.wine);
+    if (!mounted) return;
+
     final bool isUnassignedSelected = _selectedCabinet?.id == _unassignedCabinetId;
     final totalQuantity = widget.wine.quantity;
 

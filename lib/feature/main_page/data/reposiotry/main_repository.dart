@@ -36,35 +36,19 @@ class MainRepositoryImpl implements MainRepository {
   Future<void> saveWine(WineModel wine) async {
     _assertInitialized();
     await _databaseService.db.transaction((txn) async {
+      await _upsertAllWines(txn, wine);
+
+      // INSERT IGNORE + UPDATE avoids cascade-deleting wine_bottles children
       await txn.insert(
-        'wines',
-        {
-          'id': wine.id,
-          'name': wine.name,
-          'vintage': wine.vintage,
-          'type': wine.type,
-          'winery': wine.winery,
-          'region': wine.region,
-          'country': wine.country,
-          'averageRating': wine.averageRating,
-          'ratingsCount': wine.ratingsCount,
-          'description': wine.description,
-          'alcoholContent': wine.alcoholContent,
-          'quantity': wine.quantity,
-          'notice': wine.notice,
-          'imageUrl': wine.imageUrl,
-          'prices': wine.prices != null
-              ? jsonEncode(wine.prices!.map((p) => p.toJson()).toList())
-              : null,
-          'pairings': wine.foodPairings != null
-              ? jsonEncode(wine.foodPairings!.map((f) => {'food': f}).toList())
-              : null,
-          'grapes': wine.grapes != null ? jsonEncode(wine.grapes) : null,
-          'scores': wine.scores != null
-              ? jsonEncode(wine.scores!.map((s) => s.toJson()).toList())
-              : null,
-        },
-        conflictAlgorithm: ConflictAlgorithm.replace,
+        'cellar_wines',
+        {'wine_id': wine.id, 'quantity': wine.quantity, 'notice': wine.notice},
+        conflictAlgorithm: ConflictAlgorithm.ignore,
+      );
+      await txn.update(
+        'cellar_wines',
+        {'quantity': wine.quantity, 'notice': wine.notice},
+        where: 'wine_id = ?',
+        whereArgs: [wine.id],
       );
 
       if (wine.bottles != null) {
@@ -77,12 +61,46 @@ class MainRepositoryImpl implements MainRepository {
     _syncService.syncOnClose();
   }
 
+  Future<void> _upsertAllWines(DatabaseExecutor db, WineModel wine) async {
+    final map = <String, dynamic>{
+      'id':             wine.id,
+      'name':           wine.name,
+      'vintage':        wine.vintage,
+      'type':           wine.type,
+      'winery':         wine.winery,
+      'region':         wine.region,
+      'country':        wine.country,
+      'averageRating':  wine.averageRating,
+      'ratingsCount':   wine.ratingsCount,
+      'description':    wine.description,
+      'alcoholContent': wine.alcoholContent,
+      'imageUrl':       wine.imageUrl,
+      'prices':  wine.prices != null
+          ? jsonEncode(wine.prices!.map((p) => p.toJson()).toList())
+          : null,
+      'pairings': wine.foodPairings != null
+          ? jsonEncode(wine.foodPairings!.map((f) => {'food': f}).toList())
+          : null,
+      'grapes': wine.grapes != null ? jsonEncode(wine.grapes) : null,
+      'scores': wine.scores != null
+          ? jsonEncode(wine.scores!.map((s) => s.toJson()).toList())
+          : null,
+    };
+    await db.insert('all_wines', map, conflictAlgorithm: ConflictAlgorithm.ignore);
+    await db.update('all_wines', map, where: 'id = ?', whereArgs: [wine.id]);
+  }
+
   @override
   Future<List<WineModel>> getLocalWines() async {
     _assertInitialized();
     final db = _databaseService.db;
 
-    final wineRows = await db.query('wines', orderBy: 'name ASC');
+    final wineRows = await db.rawQuery('''
+      SELECT aw.*, cw.quantity, cw.notice
+      FROM   all_wines aw
+      JOIN   cellar_wines cw ON aw.id = cw.wine_id
+      ORDER  BY aw.name ASC
+    ''');
 
     // Load all bottle size entries grouped by wine_id
     final bottleRows = await db.query('wine_bottles');
@@ -143,10 +161,25 @@ class MainRepositoryImpl implements MainRepository {
   @override
   Future<void> deleteWine(String wineId) async {
     _assertInitialized();
-    await _databaseService.db.rawUpdate(
+    final db = _databaseService.db;
+
+    // Clear positions (needed even if wine stays in all_wines due to wishlist)
+    await db.rawUpdate(
       'UPDATE positions SET wine_id = NULL WHERE wine_id = ?', [wineId],
     );
-    await _databaseService.db.delete('wines', where: 'id = ?', whereArgs: [wineId]);
+
+    // Remove from cellar — cascades wine_bottles
+    await db.delete('cellar_wines', where: 'wine_id = ?', whereArgs: [wineId]);
+
+    // Only remove from all_wines if not in wishlist
+    final inWishlist = await db.query(
+      'wishlist', columns: ['wine_id'],
+      where: 'wine_id = ?', whereArgs: [wineId], limit: 1,
+    );
+    if (inWishlist.isEmpty) {
+      await db.delete('all_wines', where: 'id = ?', whereArgs: [wineId]);
+    }
+
     _syncService.syncOnClose();
   }
 

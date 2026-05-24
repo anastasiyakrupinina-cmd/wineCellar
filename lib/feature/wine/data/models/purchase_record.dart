@@ -7,7 +7,6 @@ class PurchaseRecord {
   final String currency;
   final DateTime purchasedAt;
   final String? shopName;
-  final String? shopLocation;
 
   const PurchaseRecord({
     required this.id,
@@ -18,7 +17,6 @@ class PurchaseRecord {
     required this.currency,
     required this.purchasedAt,
     this.shopName,
-    this.shopLocation,
   });
 
   factory PurchaseRecord.fromMap(Map<String, dynamic> map) => PurchaseRecord(
@@ -30,7 +28,6 @@ class PurchaseRecord {
     currency: map['currency'] as String,
     purchasedAt: DateTime.fromMillisecondsSinceEpoch(map['purchased_at'] as int),
     shopName: map['shop_name'] as String?,
-    shopLocation: map['shop_location'] as String?,
   );
 
   Map<String, dynamic> toMap() => {
@@ -42,7 +39,6 @@ class PurchaseRecord {
     'currency': currency,
     'purchased_at': purchasedAt.millisecondsSinceEpoch,
     'shop_name': shopName,
-    'shop_location': shopLocation,
   };
 
   PurchaseRecord copyWith({
@@ -54,7 +50,6 @@ class PurchaseRecord {
     String? currency,
     DateTime? purchasedAt,
     String? shopName,
-    String? shopLocation,
   }) => PurchaseRecord(
     id: id ?? this.id,
     wineId: wineId ?? this.wineId,
@@ -64,6 +59,5 @@ class PurchaseRecord {
     currency: currency ?? this.currency,
     purchasedAt: purchasedAt ?? this.purchasedAt,
     shopName: shopName ?? this.shopName,
-    shopLocation: shopLocation ?? this.shopLocation,
   );
 }

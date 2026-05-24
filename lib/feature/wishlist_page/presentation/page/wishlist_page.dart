@@ -293,6 +293,15 @@ class _AddToCellarButton extends StatelessWidget {
     );
     if (picked == null || !context.mounted) return;
 
+    final bottles = [
+      WineBottle(
+        id: '${wineDetails.id}_${DateTime.now().microsecondsSinceEpoch}',
+        wineId: wineDetails.id,
+        bottleSize: picked.bottleSize,
+        quantity: picked.quantity,
+      ),
+    ];
+
     final res = await showDialog<Map<String, dynamic>>(
       context: context,
       builder: (ctx) => StorageLocationDialog(wine: wineDetails.copyWith(quantity: picked.quantity)),
@@ -302,18 +311,7 @@ class _AddToCellarButton extends StatelessWidget {
     final loc = res['location'] as String;
     final qty = res['quantity'] as int;
     context.read<MainCubit>().saveWine(
-      wineDetails.copyWith(
-        cellarLocation: loc,
-        quantity: qty,
-        bottles: [
-          WineBottle(
-            id: '${wineDetails.id}_${DateTime.now().microsecondsSinceEpoch}',
-            wineId: wineDetails.id,
-            bottleSize: picked.bottleSize,
-            quantity: qty,
-          ),
-        ],
-      ),
+      wineDetails.copyWith(cellarLocation: loc, quantity: qty, bottles: bottles),
     );
     context.read<WishlistCubit>().remove(wine.id);
   }

@@ -55,25 +55,23 @@ class DatabaseService {
 
   Future<void> _onCreate(Database db, int version) async {
     await db.execute('''
-      CREATE TABLE wines (
-        id TEXT PRIMARY KEY,
-        name TEXT NOT NULL,
-        vintage INTEGER,
-        type TEXT,
-        winery TEXT,
-        region TEXT,
-        country TEXT,
-        averageRating REAL,
-        ratingsCount INTEGER,
-        description TEXT,
+      CREATE TABLE all_wines (
+        id             TEXT PRIMARY KEY,
+        name           TEXT NOT NULL,
+        vintage        INTEGER,
+        type           TEXT,
+        winery         TEXT,
+        region         TEXT,
+        country        TEXT,
+        averageRating  REAL,
+        ratingsCount   INTEGER,
+        description    TEXT,
         alcoholContent TEXT,
-        quantity INTEGER DEFAULT 1,
-        notice TEXT,
-        imageUrl TEXT,
-        prices TEXT,
-        pairings TEXT,
-        grapes TEXT,
-        scores TEXT
+        imageUrl       TEXT,
+        prices         TEXT,
+        pairings       TEXT,
+        grapes         TEXT,
+        scores         TEXT
       )
     ''');
 
@@ -86,9 +84,9 @@ class DatabaseService {
 
     await db.execute('''
       CREATE TABLE shelves (
-        id          TEXT PRIMARY KEY,
-        cabinet_id  TEXT NOT NULL REFERENCES cabinets(id) ON DELETE CASCADE,
-        name        TEXT NOT NULL
+        id         TEXT PRIMARY KEY,
+        cabinet_id TEXT NOT NULL REFERENCES cabinets(id) ON DELETE CASCADE,
+        name       TEXT NOT NULL
       )
     ''');
 
@@ -97,14 +95,22 @@ class DatabaseService {
         id             TEXT PRIMARY KEY,
         shelf_id       TEXT NOT NULL REFERENCES shelves(id) ON DELETE CASCADE,
         position_index INTEGER NOT NULL,
-        wine_id        TEXT
+        wine_id        TEXT REFERENCES cellar_wines(wine_id) ON DELETE SET NULL
+      )
+    ''');
+
+    await db.execute('''
+      CREATE TABLE cellar_wines (
+        wine_id  TEXT PRIMARY KEY REFERENCES all_wines(id) ON DELETE CASCADE,
+        quantity INTEGER NOT NULL DEFAULT 1,
+        notice   TEXT
       )
     ''');
 
     await db.execute('''
       CREATE TABLE wine_bottles (
         id          TEXT PRIMARY KEY,
-        wine_id     TEXT NOT NULL REFERENCES wines(id) ON DELETE CASCADE,
+        wine_id     TEXT NOT NULL REFERENCES cellar_wines(wine_id) ON DELETE CASCADE,
         bottle_size TEXT NOT NULL,
         quantity    INTEGER NOT NULL DEFAULT 1
       )
@@ -112,37 +118,27 @@ class DatabaseService {
 
     await db.execute('''
       CREATE TABLE purchase_history (
-        id           TEXT PRIMARY KEY,
-        wine_id      TEXT NOT NULL REFERENCES wines(id) ON DELETE CASCADE,
-        bottle_size  TEXT,
-        quantity     INTEGER NOT NULL DEFAULT 1,
-        price        REAL NOT NULL,
-        currency     TEXT NOT NULL DEFAULT 'USD',
-        purchased_at INTEGER NOT NULL,
-        shop_name    TEXT,
-        shop_location TEXT
+        id            TEXT PRIMARY KEY,
+        wine_id       TEXT NOT NULL REFERENCES all_wines(id) ON DELETE CASCADE,
+        bottle_size   TEXT,
+        quantity      INTEGER NOT NULL DEFAULT 1,
+        price         REAL NOT NULL,
+        currency      TEXT NOT NULL DEFAULT 'USD',
+        purchased_at  INTEGER NOT NULL,
+        shop_name     TEXT
       )
     ''');
 
     await db.execute('''
       CREATE TABLE wishlist (
-        id            TEXT PRIMARY KEY,
-        name          TEXT NOT NULL,
-        vintage       INTEGER,
-        type          TEXT,
-        winery        TEXT,
-        region        TEXT,
-        country       TEXT,
-        averageRating REAL,
-        ratingsCount  INTEGER,
-        description   TEXT,
-        alcoholContent TEXT,
-        imageUrl      TEXT,
-        prices        TEXT,
-        pairings      TEXT,
-        grapes        TEXT,
-        scores        TEXT,
-        added_at      INTEGER NOT NULL
+        wine_id  TEXT PRIMARY KEY REFERENCES all_wines(id) ON DELETE CASCADE,
+        added_at INTEGER NOT NULL
+      )
+    ''');
+
+    await db.execute('''
+      CREATE TABLE archive (
+        wine_id TEXT PRIMARY KEY REFERENCES all_wines(id) ON DELETE CASCADE
       )
     ''');
   }
