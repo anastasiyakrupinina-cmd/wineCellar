@@ -158,25 +158,103 @@ class _WineDetailPageState extends State<WineDetailPage> {
   }
 
   Widget _buildMobileLayout(WineModel wine, bool isLoading) {
-    return CustomScrollView(
-      slivers: [
-        _buildSliverAppBar(wine),
-        SliverToBoxAdapter(
-          child: Padding(
-            padding: const EdgeInsets.all(24.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                _buildMainInfo(wine),
-                const SizedBox(height: 32),
-                _buildDetailedContent(wine, isLoading),
-                const SizedBox(height: 32),
-                SafeArea(top: false, child: _buildCellarControls(wine)),
-              ],
-            ),
+    return Column(
+      children: [
+        Expanded(
+          child: CustomScrollView(
+            slivers: [
+              _buildSliverAppBar(wine),
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.all(24.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _buildMainInfo(wine),
+                      const SizedBox(height: 16),
+                      _buildDetailedContent(wine, isLoading),
+                      BlocBuilder<MainCubit, MainState>(
+                        builder: (context, state) {
+                          if (state is MainLoaded &&
+                              state.wines.any((w) => w.id == wine.id)) {
+                            return Column(
+                              children: [
+                                const SizedBox(height: 32),
+                                SafeArea(top: false, child: _buildCellarControls(wine)),
+                                const SizedBox(height: 32),
+                              ],
+                            );
+                          }
+                          return const SizedBox(height: 100);
+                        },
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
           ),
         ),
+        BlocBuilder<MainCubit, MainState>(
+          builder: (context, state) {
+            if (state is MainLoading || state is MainInitial) {
+              return const SizedBox(
+                height: 68,
+                child: Center(
+                  child: SizedBox(
+                    height: 20,
+                    width: 20,
+                    child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.darkBlue),
+                  ),
+                ),
+              );
+            }
+            if (state is MainLoaded && state.wines.any((w) => w.id == wine.id)) {
+              return const SizedBox.shrink();
+            }
+            return SafeArea(
+              top: false,
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+                child: _buildAddToCellarButton(context, wine),
+              ),
+            );
+          },
+        ),
       ],
+    );
+  }
+
+  Widget _buildAddToCellarButton(BuildContext context, WineModel wine) {
+    return AppButton(
+      text: 'Add to Cellar',
+      onPressed: () async {
+        final picked = await showDialog<({String bottleSize, int quantity})>(
+          context: context,
+          builder: (ctx) => const BottleSizeQuantityPickerDialog(),
+        );
+        if (picked == null || !context.mounted) return;
+
+        final res = await showDialog<Map<String, dynamic>>(
+          context: context,
+          builder: (ctx) => StorageLocationDialog(wine: wine.copyWith(quantity: picked.quantity)),
+        );
+        if (res != null && context.mounted) {
+          final loc = res['location'] as String;
+          final qty = res['quantity'] as int;
+          final bottles = [
+            WineBottle(
+              id: '${wine.id}_${DateTime.now().microsecondsSinceEpoch}',
+              wineId: wine.id,
+              bottleSize: picked.bottleSize,
+              quantity: qty,
+            ),
+          ];
+          await context.read<MainCubit>().saveWine(
+            wine.copyWith(cellarLocation: loc, quantity: qty, bottles: bottles),
+          );
+        }
+      },
     );
   }
 
@@ -208,9 +286,11 @@ class _WineDetailPageState extends State<WineDetailPage> {
   }
 
   Widget _buildMainInfo(WineModel wine) {
-    final location =
-        '${wine.region ?? ""}${wine.region != null && wine.country != null ? ", " : ""}${wine.country ?? ""}'
-            .trim();
+    final locationParts = [
+      if (wine.region?.isNotEmpty == true) wine.region!,
+      if (wine.country?.isNotEmpty == true) wine.country!,
+    ];
+    final location = locationParts.join(', ');
     final vintage = wine.vintage;
     final hasVintage = vintage != null && vintage > 0;
     return BlocBuilder<MainCubit, MainState>(
@@ -241,10 +321,11 @@ class _WineDetailPageState extends State<WineDetailPage> {
                         ),
                         const SizedBox(height: 4),
                       ],
-                      Text(
-                        location.isNotEmpty ? location : 'Location unknown',
-                        style: AppTextStyles.body.copyWith(color: AppColors.textSecondary, fontSize: 18),
-                      ),
+                      if (location.isNotEmpty)
+                        Text(
+                          location,
+                          style: AppTextStyles.body.copyWith(color: AppColors.textSecondary, fontSize: 18),
+                        ),
                       if (hasVintage) ...[
                         const SizedBox(height: 8),
                         Text(
@@ -319,83 +400,84 @@ class _WineDetailPageState extends State<WineDetailPage> {
   }
 
   Widget _buildDetailedContent(WineModel wine, bool isLoading) {
+    final sections = <Widget>[];
+
+    if (wine.description?.isNotEmpty == true)
+      sections.add(Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Text('Description', style: AppTextStyles.h2),
+        const SizedBox(height: 12),
+        Text(wine.description!, style: AppTextStyles.body.copyWith(height: 1.6)),
+      ]));
+
+    if (wine.grapes?.isNotEmpty == true)
+      sections.add(Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Text('Grapes', style: AppTextStyles.h2),
+        const SizedBox(height: 12),
+        Wrap(
+          spacing: 8, runSpacing: 8,
+          children: wine.grapes!.map((g) => Chip(
+            label: Text(g, style: AppTextStyles.caption.copyWith(color: AppColors.darkBlue)),
+            backgroundColor: AppColors.lightBlue.withOpacity(0.15),
+            side: BorderSide.none,
+            padding: const EdgeInsets.symmetric(horizontal: 4),
+          )).toList(),
+        ),
+      ]));
+
+    if (wine.scores?.isNotEmpty == true)
+      sections.add(Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Text('Scores', style: AppTextStyles.h2),
+        const SizedBox(height: 12),
+        ...wine.scores!.map((s) => _ScoreTile(score: s)),
+      ]));
+
+    if (wine.notice?.isNotEmpty == true)
+      sections.add(Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Text('My Notice', style: AppTextStyles.h2),
+        const SizedBox(height: 12),
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: AppColors.lightBlue.withOpacity(0.05),
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: AppColors.lightBlue.withOpacity(0.1)),
+          ),
+          child: Text(wine.notice!, style: AppTextStyles.body.copyWith(height: 1.6, fontStyle: FontStyle.italic)),
+        ),
+      ]));
+
+    if (wine.prices?.isNotEmpty == true)
+      sections.add(Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Text('Shop offers', style: AppTextStyles.h2),
+        const SizedBox(height: 16),
+        ...wine.prices!.map((p) => _PriceTile(price: p)),
+      ]));
+
+    if (wine.foodPairings?.isNotEmpty == true)
+      sections.add(Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Text('Perfect pairing with:', style: AppTextStyles.h2),
+        const SizedBox(height: 16),
+        Wrap(
+          spacing: 10, runSpacing: 10,
+          children: wine.foodPairings!.map((food) => _buildFoodChip(food)).toList(),
+        ),
+      ]));
+
+    sections.add(_buildPurchaseHistorySection(wine));
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         if (isLoading)
           const Padding(
-            padding: EdgeInsets.only(bottom: 24),
+            padding: EdgeInsets.only(bottom: 16),
             child: LinearProgressIndicator(color: AppColors.darkBlue),
           ),
-        if (wine.description?.isNotEmpty == true) ...[
-          Text('Description', style: AppTextStyles.h2),
-          const SizedBox(height: 12),
-          Text(
-            wine.description!,
-            style: AppTextStyles.body.copyWith(height: 1.6),
-          ),
+        for (int i = 0; i < sections.length; i++) ...[
+          if (i > 0) const SizedBox(height: 28),
+          sections[i],
         ],
-
-        if (wine.grapes != null && wine.grapes!.isNotEmpty) ...[
-          const SizedBox(height: 32),
-          Text('Grapes', style: AppTextStyles.h2),
-          const SizedBox(height: 12),
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: wine.grapes!.map((g) => Chip(
-              label: Text(g, style: AppTextStyles.caption.copyWith(color: AppColors.darkBlue)),
-              backgroundColor: AppColors.lightBlue.withOpacity(0.15),
-              side: BorderSide.none,
-              padding: const EdgeInsets.symmetric(horizontal: 4),
-            )).toList(),
-          ),
-        ],
-
-        if (wine.scores != null && wine.scores!.isNotEmpty) ...[
-          const SizedBox(height: 32),
-          Text('Scores', style: AppTextStyles.h2),
-          const SizedBox(height: 12),
-          ...wine.scores!.map((s) => _ScoreTile(score: s)),
-        ],
-
-        if (wine.notice != null && wine.notice!.isNotEmpty) ...[
-          const SizedBox(height: 32),
-          Text('My Notice', style: AppTextStyles.h2),
-          const SizedBox(height: 12),
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: AppColors.lightBlue.withOpacity(0.05),
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: AppColors.lightBlue.withOpacity(0.1)),
-            ),
-            child: Text(
-              wine.notice!,
-              style: AppTextStyles.body.copyWith(height: 1.6, fontStyle: FontStyle.italic),
-            ),
-          ),
-        ],
-
-        if (wine.prices != null && wine.prices!.isNotEmpty) ...[
-          const SizedBox(height: 32),
-          Text('Shop offers', style: AppTextStyles.h2),
-          const SizedBox(height: 16),
-          ...wine.prices!.map((p) => _PriceTile(price: p)),
-        ],
-        if (wine.foodPairings != null && wine.foodPairings!.isNotEmpty) ...[
-          const SizedBox(height: 32),
-          Text('Perfect pairing with:', style: AppTextStyles.h2),
-          const SizedBox(height: 16),
-          Wrap(
-            spacing: 10,
-            runSpacing: 10,
-            children: wine.foodPairings!.map((food) => _buildFoodChip(food)).toList(),
-          ),
-        ],
-        const SizedBox(height: 32),
-        _buildPurchaseHistorySection(wine),
       ],
     );
   }
@@ -1497,8 +1579,11 @@ class _LogPurchaseDialogState extends State<_LogPurchaseDialog> {
 
   Widget _field(String label, TextEditingController controller, String hint,
       {TextInputType keyboardType = TextInputType.text, bool hasError = false}) {
-    final border = OutlineInputBorder(borderRadius: BorderRadius.circular(12));
-    final errorBorder = OutlineInputBorder(
+    final greyBorder = OutlineInputBorder(
+      borderRadius: BorderRadius.circular(12),
+      borderSide: BorderSide(color: Colors.grey.shade300),
+    );
+    final redBorder = OutlineInputBorder(
       borderRadius: BorderRadius.circular(12),
       borderSide: const BorderSide(color: AppColors.error, width: 1.5),
     );
@@ -1514,21 +1599,25 @@ class _LogPurchaseDialogState extends State<_LogPurchaseDialog> {
           decoration: InputDecoration(
             hintText: hint,
             hintStyle: TextStyle(color: AppColors.textSecondary.withValues(alpha: 0.4)),
-            border: hasError ? errorBorder : border,
-            enabledBorder: hasError ? errorBorder : border,
+            border: greyBorder,
+            enabledBorder: hasError ? redBorder : greyBorder,
             focusedBorder: hasError
-                ? OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: const BorderSide(color: AppColors.error, width: 2),
-                  )
-                : OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: const BorderSide(color: AppColors.lightBlue, width: 2),
-                  ),
+                ? OutlineInputBorder(borderRadius: BorderRadius.circular(12),
+                    borderSide: const BorderSide(color: AppColors.error, width: 2))
+                : OutlineInputBorder(borderRadius: BorderRadius.circular(12),
+                    borderSide: const BorderSide(color: AppColors.lightBlue, width: 2)),
             contentPadding: const EdgeInsets.all(12),
-            errorText: hasError ? 'Required' : null,
-            errorStyle: const TextStyle(color: AppColors.error),
           ),
+        ),
+        SizedBox(
+          height: 18,
+          child: hasError
+              ? Padding(
+                  padding: const EdgeInsets.only(left: 4, top: 2),
+                  child: Text('Required',
+                      style: const TextStyle(color: AppColors.error, fontSize: 12)),
+                )
+              : null,
         ),
       ],
     );

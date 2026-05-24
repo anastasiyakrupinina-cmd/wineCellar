@@ -39,19 +39,12 @@ class DatabaseService {
 
     _db = await openDatabase(
       _dbPath!,
-      version: 5,
+      version: 6,
       onConfigure: (db) async {
         await db.execute('PRAGMA foreign_keys = ON');
       },
       onCreate: _onCreate,
-      onUpgrade: _onUpgrade,
     );
-  }
-
-  Future<void> _onUpgrade(Database db, int oldVersion, int newVersion) async {
-    if (oldVersion < 5) {
-      await db.execute('ALTER TABLE wines ADD COLUMN grapes TEXT');
-    }
   }
 
   Future<void> close() async {
@@ -79,7 +72,8 @@ class DatabaseService {
         imageUrl TEXT,
         prices TEXT,
         pairings TEXT,
-        grapes TEXT
+        grapes TEXT,
+        scores TEXT
       )
     ''');
 
@@ -146,6 +140,8 @@ class DatabaseService {
         imageUrl      TEXT,
         prices        TEXT,
         pairings      TEXT,
+        grapes        TEXT,
+        scores        TEXT,
         added_at      INTEGER NOT NULL
       )
     ''');

@@ -60,6 +60,9 @@ class MainRepositoryImpl implements MainRepository {
               ? jsonEncode(wine.foodPairings!.map((f) => {'food': f}).toList())
               : null,
           'grapes': wine.grapes != null ? jsonEncode(wine.grapes) : null,
+          'scores': wine.scores != null
+              ? jsonEncode(wine.scores!.map((s) => s.toJson()).toList())
+              : null,
         },
         conflictAlgorithm: ConflictAlgorithm.replace,
       );
@@ -197,6 +200,7 @@ class MainRepositoryImpl implements MainRepository {
       'prices': row['prices'] != null ? jsonDecode(row['prices'] as String) : null,
       'pairings': row['pairings'] != null ? jsonDecode(row['pairings'] as String) : null,
       'grapes': row['grapes'] != null ? jsonDecode(row['grapes'] as String) : null,
+      'scores': row['scores'] != null ? jsonDecode(row['scores'] as String) : null,
     }).copyWith(bottles: bottles);
   }
 }
