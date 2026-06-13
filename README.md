@@ -49,19 +49,6 @@ Wine Cellar is a cross-platform mobile and desktop application that lets you cat
 
 See [SETUP_GUIDE.md](SETUP_GUIDE.md) for a full step-by-step installation guide (includes Flutter, Android Studio, and Windows build tools setup).
 
-### Quick start
-
-```bash
-# Install dependencies
-flutter pub get
-
-# Run on Android emulator
-flutter run -d android
-
-# Run as a Windows desktop app
-flutter run -d windows
-```
-
 ### Login
 
 The app uses your University of Vienna **u:account** credentials:

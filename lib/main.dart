@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:auto_route/auto_route.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -10,7 +12,20 @@ import 'package:wine_cellar/core/theme/app_theme.dart';
 import 'package:wine_cellar/feature/archive_page/presentation/cubit/archive_cubit.dart';
 import 'package:wine_cellar/feature/wishlist_page/presentation/cubit/wishlist_cubit.dart';
 
+// Dart on Windows uses BoringSSL's own certificate store instead of the
+// Windows system store, so it cannot verify certificates from CAs that are
+// only trusted system-wide (e.g. the university's CA chain).
+class _TrustAllCertsOverride extends HttpOverrides {
+  @override
+  HttpClient createHttpClient(SecurityContext? context) =>
+      super.createHttpClient(context)
+        ..badCertificateCallback = (cert, host, port) => true;
+}
+
 void main() async {
+  if (Platform.isWindows) {
+    HttpOverrides.global = _TrustAllCertsOverride();
+  }
   WidgetsFlutterBinding.ensureInitialized();
   await configureDependencies();
   runApp(const MyApp());
