@@ -128,15 +128,7 @@ class _WineDetailPageState extends State<WineDetailPage> {
             child: Center(
               child: Hero(
                 tag: 'bottle_${wine.id}',
-                child: wine.imageUrl != null && wine.imageUrl!.isNotEmpty
-                    ? Image.network(
-                        wine.imageUrl!,
-                        fit: BoxFit.contain,
-                        errorBuilder: (context, error, stackTrace) {
-                          return AbstractWineBottle(type: wine.type, size: 300);
-                        },
-                      )
-                    : AbstractWineBottle(type: wine.type, size: 300),
+                child: AbstractWineBottle(type: wine.type, size: 300),
               ),
             ),
           ),
@@ -274,18 +266,7 @@ class _WineDetailPageState extends State<WineDetailPage> {
       backgroundColor: AppColors.baseWhite,
       iconTheme: const IconThemeData(color: AppColors.darkBlue),
       flexibleSpace: FlexibleSpaceBar(
-        background: wine.imageUrl != null && wine.imageUrl!.isNotEmpty
-            ? Image.network(
-                wine.imageUrl!,
-                fit: BoxFit.cover,
-                errorBuilder: (context, error, stackTrace) {
-                  return Container(
-                    color: AppColors.lightBlue.withValues(alpha: 0.05),
-                    child: Center(child: AbstractWineBottle(type: wine.type, size: 200)),
-                  );
-                },
-              )
-            : Container(
+        background: Container(
                 color: AppColors.lightBlue.withValues(alpha: 0.05),
                 child: Center(child: AbstractWineBottle(type: wine.type, size: 200)),
               ),

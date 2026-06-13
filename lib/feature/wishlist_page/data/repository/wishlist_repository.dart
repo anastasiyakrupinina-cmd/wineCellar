@@ -29,7 +29,6 @@ class WishlistRepositoryImpl implements WishlistRepository {
       'ratingsCount':   wine.ratingsCount,
       'description':    wine.description,
       'alcoholContent': wine.alcoholContent,
-      'imageUrl':       wine.imageUrl,
       'prices':  wine.prices != null
           ? jsonEncode(wine.prices!.map((p) => p.toJson()).toList())
           : null,
@@ -85,7 +84,6 @@ class WishlistRepositoryImpl implements WishlistRepository {
       'ratingsCount':   row['ratingsCount'],
       'description':    row['description'],
       'alcoholContent': row['alcoholContent'],
-      'imageUrl':       row['imageUrl'],
       'prices':   row['prices']   != null ? jsonDecode(row['prices']   as String) : null,
       'pairings': row['pairings'] != null ? jsonDecode(row['pairings'] as String) : null,
       'grapes':   row['grapes']   != null ? jsonDecode(row['grapes']   as String) : null,

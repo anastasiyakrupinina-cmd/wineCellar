@@ -64,7 +64,6 @@ class DatabaseService {
         ratingsCount   INTEGER,
         description    TEXT,
         alcoholContent TEXT,
-        imageUrl       TEXT,
         prices         TEXT,
         pairings       TEXT,
         grapes         TEXT,

@@ -14,7 +14,6 @@ class WineModel {
   final double? averageRating;
   final int? ratingsCount;
 
-  final String? imageUrl;
   final String? description;
   final String? alcoholContent;
 
@@ -39,7 +38,6 @@ class WineModel {
     this.country,
     this.averageRating,
     this.ratingsCount,
-    this.imageUrl,
     this.description,
     this.alcoholContent,
     this.prices,
@@ -145,12 +143,6 @@ class WineModel {
 
       ratingsCount: parseInt(data['ratingsCount']),
 
-      imageUrl:
-          data['imageUrl']?.toString() ??
-          data['image']?.toString() ??
-          data['picture']?.toString() ??
-          data['thumb']?.toString(),
-
       description: data['description']?.toString(),
 
       alcoholContent: data['alcoholContent']?.toString(),
@@ -184,7 +176,6 @@ class WineModel {
       'country': country,
       'averageRating': averageRating,
       'ratingsCount': ratingsCount,
-      'imageUrl': imageUrl,
       'description': description,
       'alcoholContent': alcoholContent,
       'prices': prices?.map((p) => p.toJson()).toList(),
@@ -207,7 +198,6 @@ class WineModel {
     String? country,
     double? averageRating,
     int? ratingsCount,
-    String? imageUrl,
     String? description,
     String? alcoholContent,
     List<WinePrice>? prices,
@@ -229,7 +219,6 @@ class WineModel {
       country: country ?? this.country,
       averageRating: averageRating ?? this.averageRating,
       ratingsCount: ratingsCount ?? this.ratingsCount,
-      imageUrl: imageUrl ?? this.imageUrl,
       description: description ?? this.description,
       alcoholContent: alcoholContent ?? this.alcoholContent,
       prices: prices ?? this.prices,

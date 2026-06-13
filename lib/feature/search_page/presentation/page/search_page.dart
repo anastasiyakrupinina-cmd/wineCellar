@@ -206,17 +206,7 @@ class _SearchWineCard extends StatelessWidget {
                     borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
                     child: Container(
                       color: AppColors.lightBlue.withValues(alpha: 0.2),
-                      child: wine.imageUrl != null && wine.imageUrl!.isNotEmpty
-                          ? Image.network(
-                              wine.imageUrl!,
-                              fit: BoxFit.cover,
-                              errorBuilder: (context, error, stackTrace) {
-                                return Center(
-                                  child: AbstractWineBottle(type: wine.type, size: 110),
-                                );
-                              },
-                            )
-                          : Center(
+                      child: Center(
                               child: AbstractWineBottle(type: wine.type, size: 110),
                             ),
                     ),

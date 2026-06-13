@@ -488,14 +488,7 @@ class _ShelfBottle extends StatelessWidget {
                         ),
                       ],
                     ),
-                    child: wine.imageUrl != null
-                        ? Image.network(
-                            wine.imageUrl!,
-                            fit: BoxFit.contain,
-                            errorBuilder: (context, error, stackTrace) =>
-                                AbstractWineBottle(type: wine.type, size: 90),
-                          )
-                        : AbstractWineBottle(type: wine.type, size: 90),
+                    child: AbstractWineBottle(type: wine.type, size: 90),
                   ),
                 ),
                 const SizedBox(height: 12),

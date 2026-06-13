@@ -126,14 +126,7 @@ class _ArchiveCard extends StatelessWidget {
                 width: 80,
                 height: 110,
                 color: AppColors.lightBlue.withValues(alpha: 0.15),
-                child: wine.imageUrl != null && wine.imageUrl!.isNotEmpty
-                    ? Image.network(
-                        wine.imageUrl!,
-                        fit: BoxFit.cover,
-                        errorBuilder: (_, _, _) =>
-                            Center(child: AbstractWineBottle(type: wine.type, size: 50)),
-                      )
-                    : Center(child: AbstractWineBottle(type: wine.type, size: 50)),
+                child: Center(child: AbstractWineBottle(type: wine.type, size: 50)),
               ),
             ),
           ),
