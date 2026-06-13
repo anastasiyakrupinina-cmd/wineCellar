@@ -52,7 +52,7 @@ class ProfilePage extends StatelessWidget {
                       height: 100,
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
-                        color: AppColors.lightBlue.withOpacity(0.3),
+                        color: AppColors.lightBlue.withValues(alpha: 0.3),
                         border: Border.all(color: AppColors.lightBlue, width: 2),
                       ),
                       child: Center(

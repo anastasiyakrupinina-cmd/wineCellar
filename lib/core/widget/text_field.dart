@@ -63,7 +63,7 @@ class _AppTextFieldState extends State<AppTextField> {
           style: const TextStyle(color: AppColors.textMain),
           decoration: InputDecoration(
             hintText: widget.hint,
-            hintStyle: TextStyle(color: AppColors.textSecondary.withOpacity(0.5)),
+            hintStyle: TextStyle(color: AppColors.textSecondary.withValues(alpha: 0.5)),
             filled: true,
             fillColor: AppColors.baseWhite,
             contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),

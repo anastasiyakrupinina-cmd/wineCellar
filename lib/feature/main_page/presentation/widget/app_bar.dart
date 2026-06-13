@@ -16,7 +16,7 @@ class MainAppBar extends StatelessWidget implements PreferredSizeWidget {
   @override
   Widget build(BuildContext context) {
     return AppBar(
-      backgroundColor: AppColors.baseWhite.withOpacity(0.8),
+      backgroundColor: AppColors.baseWhite.withValues(alpha: 0.8),
       elevation: 0,
       scrolledUnderElevation: 0,
       leading: IconButton(

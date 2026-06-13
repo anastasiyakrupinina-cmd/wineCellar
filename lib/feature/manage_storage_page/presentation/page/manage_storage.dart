@@ -54,7 +54,7 @@ class ManageStoragePage extends StatelessWidget {
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Icon(Icons.shelves, size: 80, color: AppColors.lightBlue.withOpacity(0.5)),
+                          Icon(Icons.shelves, size: 80, color: AppColors.lightBlue.withValues(alpha: 0.5)),
                           const SizedBox(height: 16),
                           Text(
                             'Your storage is empty.\nAdd your first wine cabinet or shelf!',
@@ -95,7 +95,7 @@ class ManageStoragePage extends StatelessWidget {
         color: Colors.white,
         borderRadius: BorderRadius.circular(24),
         boxShadow: [
-          BoxShadow(color: AppColors.darkBlue.withOpacity(0.04), blurRadius: 20, offset: const Offset(0, 10)),
+          BoxShadow(color: AppColors.darkBlue.withValues(alpha: 0.04), blurRadius: 20, offset: const Offset(0, 10)),
         ],
       ),
       child: ExpansionTile(
@@ -136,7 +136,7 @@ class ManageStoragePage extends StatelessWidget {
                 const SizedBox(width: 16),
                 Container(
                   decoration: BoxDecoration(
-                    color: AppColors.error.withOpacity(0.1),
+                    color: AppColors.error.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(16),
                   ),
                   child: IconButton(
@@ -181,9 +181,9 @@ class ManageStoragePage extends StatelessWidget {
         width: 44,
         height: 44,
         decoration: BoxDecoration(
-          color: isOccupied ? AppColors.darkBlue : AppColors.lightBlue.withOpacity(0.05),
+          color: isOccupied ? AppColors.darkBlue : AppColors.lightBlue.withValues(alpha: 0.05),
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: isOccupied ? AppColors.darkBlue : AppColors.lightBlue.withOpacity(0.3)),
+          border: Border.all(color: isOccupied ? AppColors.darkBlue : AppColors.lightBlue.withValues(alpha: 0.3)),
         ),
         child: Center(
           child: isOccupied

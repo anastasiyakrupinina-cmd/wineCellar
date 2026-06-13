@@ -39,14 +39,10 @@ class _MyAppState extends State<MyApp> {
   }
 
   Future<void> _onAppBackground() async {
-    print('[Lifecycle] _onAppBackground triggered');
     final sync = getIt<UCloudSyncService>();
     final hasCreds = await sync.hasCredentials();
-    print('[Lifecycle] hasCredentials: $hasCreds');
     if (hasCreds) {
-      print('[Lifecycle] Starting syncOnClose...');
       await sync.syncOnClose();
-      print('[Lifecycle] syncOnClose complete');
     }
   }
 

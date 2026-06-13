@@ -14,14 +14,14 @@ class WineLinesPainter extends CustomPainter {
 
     _drawBlurBlob(
       canvas,
-      color: AppColors.lightBlue.withOpacity(0.15),
+      color: AppColors.lightBlue.withValues(alpha: 0.15),
       offset: Offset(size.width * 0.2, size.height * 0.2),
       radius: 150 + (math.sin(progress * math.pi) * 30),
     );
 
     _drawBlurBlob(
       canvas,
-      color: AppColors.lightGreen.withOpacity(0.1),
+      color: AppColors.lightGreen.withValues(alpha: 0.1),
       offset: Offset(size.width * 0.8, size.height * 0.5),
       radius: 200 + (math.cos(progress * math.pi) * 40),
     );
@@ -29,7 +29,7 @@ class WineLinesPainter extends CustomPainter {
     final geoPaint = Paint()
       ..style = PaintingStyle.stroke
       ..strokeWidth = 0.5
-      ..color = AppColors.darkBlue.withOpacity(0.1);
+      ..color = AppColors.darkBlue.withValues(alpha: 0.1);
 
     canvas.save();
     canvas.translate(center.dx, center.dy * 0.5);
@@ -46,7 +46,7 @@ class WineLinesPainter extends CustomPainter {
     _drawWave(
       canvas,
       size,
-      color: AppColors.darkBlue.withOpacity(0.05),
+      color: AppColors.darkBlue.withValues(alpha: 0.05),
       amplitude: 20,
       speed: progress * 2 * math.pi,
       yOffset: 0.88,
@@ -55,7 +55,7 @@ class WineLinesPainter extends CustomPainter {
     _drawWave(
       canvas,
       size,
-      color: AppColors.lightBlue.withOpacity(0.08),
+      color: AppColors.lightBlue.withValues(alpha: 0.08),
       amplitude: 15,
       speed: (progress + 0.5) * 2 * math.pi,
       yOffset: 0.9,
@@ -66,9 +66,9 @@ class WineLinesPainter extends CustomPainter {
       ..strokeWidth = 1.2
       ..shader = LinearGradient(
         colors: [
-          AppColors.darkBlue.withOpacity(0),
-          AppColors.darkBlue.withOpacity(0.2),
-          AppColors.darkBlue.withOpacity(0),
+          AppColors.darkBlue.withValues(alpha: 0),
+          AppColors.darkBlue.withValues(alpha: 0.2),
+          AppColors.darkBlue.withValues(alpha: 0),
         ],
       ).createShader(rect);
 

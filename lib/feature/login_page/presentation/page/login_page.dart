@@ -85,16 +85,16 @@ class _LoginPageState extends State<LoginPage> with SingleTickerProviderStateMix
                             Container(
                               padding: const EdgeInsets.symmetric(vertical: 40, horizontal: 32),
                               decoration: BoxDecoration(
-                                color: AppColors.baseWhite.withOpacity(0.8),
+                                color: AppColors.baseWhite.withValues(alpha: 0.8),
                                 borderRadius: BorderRadius.circular(32),
                                 boxShadow: [
                                   BoxShadow(
-                                    color: Colors.black.withOpacity(0.05),
+                                    color: Colors.black.withValues(alpha: 0.05),
                                     blurRadius: 40,
                                     offset: const Offset(0, 20),
                                   ),
                                 ],
-                                border: Border.all(color: Colors.white.withOpacity(0.5)),
+                                border: Border.all(color: Colors.white.withValues(alpha: 0.5)),
                               ),
                               child: Form(
                                 key: _formKey,
@@ -171,7 +171,7 @@ class _LoginPageState extends State<LoginPage> with SingleTickerProviderStateMix
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 gradient: RadialGradient(
-                  colors: [AppColors.lightBlue.withOpacity(0.4), AppColors.lightBlue.withOpacity(0)],
+                  colors: [AppColors.lightBlue.withValues(alpha: 0.4), AppColors.lightBlue.withValues(alpha: 0)],
                 ),
               ),
             ),

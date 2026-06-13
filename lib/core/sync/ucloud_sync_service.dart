@@ -24,8 +24,9 @@ class UCloudSyncService {
   static const int _connectTimeoutMs = 10000; // 10 s
   static const int _receiveTimeoutMs = 30000; // 30 s
 
-  // macOS/Windows: Keychain requires proper code signing; use SharedPreferences instead.
-  static bool get _useSecureStorage => Platform.isAndroid || Platform.isIOS;
+  // macOS: Keychain requires a valid Apple Developer Team ID; ad-hoc signing doesn't provide one.
+  // All other platforms (Android, iOS, Windows) use flutter_secure_storage natively.
+  static bool get _useSecureStorage => !Platform.isMacOS;
 
   final FlutterSecureStorage _secureStorage = const FlutterSecureStorage();
   final DatabaseService _databaseService;
@@ -150,34 +151,15 @@ class UCloudSyncService {
   /// Concurrent calls are collapsed: if an upload is already running the new
   /// request is silently dropped (the in-flight upload already has the latest data).
   Future<void> uploadDb() async {
-    if (_isUploading) {
-      print('[UCloud] uploadDb() skipped: already uploading');
-      return;
-    }
-    if (!_databaseService.isInitialized) {
-      print('[UCloud] uploadDb() skipped: DB not initialised');
-      return;
-    }
+    if (_isUploading) return;
+    if (!_databaseService.isInitialized) return;
     _isUploading = true;
-    print('[UCloud] uploadDb() called');
     try {
-      // Flush any WAL frames into the main .db file so the file we read is
-      // fully up-to-date without having to close the connection.
       await _databaseService.db.rawQuery('PRAGMA wal_checkpoint(TRUNCATE)');
 
-      final localPath = _databaseService.dbPath;
-      final localFile = File(localPath);
-      print('[UCloud] local path: $localPath');
-      print('[UCloud] file exists: ${localFile.existsSync()}');
-      if (localFile.existsSync()) {
-        print('[UCloud] file size: ${await localFile.length()} bytes');
-      }
-
+      final localFile = File(_databaseService.dbPath);
       final client = await _getClient();
-      if (client == null) {
-        print('[UCloud] upload FAILED: no credentials');
-        return;
-      }
+      if (client == null) return;
 
       try {
         await client.mkdir(_remoteDir);
@@ -189,10 +171,8 @@ class UCloudSyncService {
 
       final bytes = await localFile.readAsBytes();
       await client.write(_remoteFile, bytes);
-      print('[UCloud] upload SUCCESS');
-    } catch (e, stack) {
-      print('[UCloud] upload FAILED: $e');
-      print(stack);
+    } catch (_) {
+      // Upload failure is silent — will retry on next sync
     } finally {
       _isUploading = false;
     }

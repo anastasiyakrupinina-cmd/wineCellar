@@ -12,7 +12,7 @@ class AbstractWineBottle extends StatelessWidget {
     if (t.contains('white')) return const Color(0xFFF3E5AB);
     if (t.contains('rose') || t.contains('rosé')) return const Color(0xFFFF8C94);
     if (t.contains('sparkling')) return const Color(0xFFE5D681);
-    return Colors.grey.withOpacity(0.3);
+    return Colors.grey.withValues(alpha: 0.3);
   }
 
   @override
@@ -56,7 +56,7 @@ class BottlePainter extends CustomPainter {
     canvas.drawPath(path, paint);
 
     final highlightPaint = Paint()
-      ..color = Colors.white.withOpacity(0.2)
+      ..color = Colors.white.withValues(alpha: 0.2)
       ..style = PaintingStyle.fill;
 
     canvas.drawRect(Rect.fromLTWH(w * 0.2, h * 0.4, w * 0.1, h * 0.4), highlightPaint);

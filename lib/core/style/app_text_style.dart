@@ -19,13 +19,13 @@ class AppTextStyles {
   static TextStyle body = GoogleFonts.inter(
     fontSize: 16,
     fontWeight: FontWeight.normal,
-    color: AppColors.darkBlue.withOpacity(0.9),
+    color: AppColors.darkBlue.withValues(alpha: 0.9),
   );
 
   static TextStyle caption = GoogleFonts.inter(
     fontSize: 14,
     fontWeight: FontWeight.normal,
-    color: AppColors.darkBlue.withOpacity(0.6),
+    color: AppColors.darkBlue.withValues(alpha: 0.6),
   );
 
   static TextStyle button = GoogleFonts.montserrat(

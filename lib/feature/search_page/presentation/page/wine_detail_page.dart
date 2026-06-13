@@ -123,7 +123,7 @@ class _WineDetailPageState extends State<WineDetailPage> {
             margin: const EdgeInsets.all(60),
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(32),
-              color: AppColors.lightBlue.withOpacity(0.05),
+              color: AppColors.lightBlue.withValues(alpha: 0.05),
             ),
             child: Center(
               child: Hero(
@@ -280,13 +280,13 @@ class _WineDetailPageState extends State<WineDetailPage> {
                 fit: BoxFit.cover,
                 errorBuilder: (context, error, stackTrace) {
                   return Container(
-                    color: AppColors.lightBlue.withOpacity(0.05),
+                    color: AppColors.lightBlue.withValues(alpha: 0.05),
                     child: Center(child: AbstractWineBottle(type: wine.type, size: 200)),
                   );
                 },
               )
             : Container(
-                color: AppColors.lightBlue.withOpacity(0.05),
+                color: AppColors.lightBlue.withValues(alpha: 0.05),
                 child: Center(child: AbstractWineBottle(type: wine.type, size: 200)),
               ),
       ),
@@ -410,14 +410,15 @@ class _WineDetailPageState extends State<WineDetailPage> {
   Widget _buildDetailedContent(WineModel wine, bool isLoading) {
     final sections = <Widget>[];
 
-    if (wine.description?.isNotEmpty == true)
+    if (wine.description?.isNotEmpty == true) {
       sections.add(Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         Text('Description', style: AppTextStyles.h2),
         const SizedBox(height: 12),
         Text(wine.description!, style: AppTextStyles.body.copyWith(height: 1.6)),
       ]));
+    }
 
-    if (wine.grapes?.isNotEmpty == true)
+    if (wine.grapes?.isNotEmpty == true) {
       sections.add(Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         Text('Grapes', style: AppTextStyles.h2),
         const SizedBox(height: 12),
@@ -425,21 +426,23 @@ class _WineDetailPageState extends State<WineDetailPage> {
           spacing: 8, runSpacing: 8,
           children: wine.grapes!.map((g) => Chip(
             label: Text(g, style: AppTextStyles.caption.copyWith(color: AppColors.darkBlue)),
-            backgroundColor: AppColors.lightBlue.withOpacity(0.15),
+            backgroundColor: AppColors.lightBlue.withValues(alpha: 0.15),
             side: BorderSide.none,
             padding: const EdgeInsets.symmetric(horizontal: 4),
           )).toList(),
         ),
       ]));
+    }
 
-    if (wine.scores?.isNotEmpty == true)
+    if (wine.scores?.isNotEmpty == true) {
       sections.add(Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         Text('Scores', style: AppTextStyles.h2),
         const SizedBox(height: 12),
         ...wine.scores!.map((s) => _ScoreTile(score: s)),
       ]));
+    }
 
-    if (wine.notice?.isNotEmpty == true)
+    if (wine.notice?.isNotEmpty == true) {
       sections.add(Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         Text('My Notice', style: AppTextStyles.h2),
         const SizedBox(height: 12),
@@ -447,22 +450,24 @@ class _WineDetailPageState extends State<WineDetailPage> {
           width: double.infinity,
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: AppColors.lightBlue.withOpacity(0.05),
+            color: AppColors.lightBlue.withValues(alpha: 0.05),
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: AppColors.lightBlue.withOpacity(0.1)),
+            border: Border.all(color: AppColors.lightBlue.withValues(alpha: 0.1)),
           ),
           child: Text(wine.notice!, style: AppTextStyles.body.copyWith(height: 1.6, fontStyle: FontStyle.italic)),
         ),
       ]));
+    }
 
-    if (wine.prices?.isNotEmpty == true)
+    if (wine.prices?.isNotEmpty == true) {
       sections.add(Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         Text('Shop offers', style: AppTextStyles.h2),
         const SizedBox(height: 16),
         ...wine.prices!.map((p) => _PriceTile(price: p)),
       ]));
+    }
 
-    if (wine.foodPairings?.isNotEmpty == true)
+    if (wine.foodPairings?.isNotEmpty == true) {
       sections.add(Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         Text('Perfect pairing with:', style: AppTextStyles.h2),
         const SizedBox(height: 16),
@@ -471,6 +476,7 @@ class _WineDetailPageState extends State<WineDetailPage> {
           children: wine.foodPairings!.map((food) => _buildFoodChip(food)).toList(),
         ),
       ]));
+    }
 
     sections.add(_buildPurchaseHistorySection(wine));
 
@@ -547,7 +553,7 @@ class _WineDetailPageState extends State<WineDetailPage> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.lightBlue.withOpacity(0.1)),
+        border: Border.all(color: AppColors.lightBlue.withValues(alpha: 0.1)),
       ),
       child: Row(
         children: [
@@ -627,9 +633,9 @@ class _WineDetailPageState extends State<WineDetailPage> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       decoration: BoxDecoration(
-        color: AppColors.lightBlue.withOpacity(0.08),
+        color: AppColors.lightBlue.withValues(alpha: 0.08),
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: AppColors.lightBlue.withOpacity(0.1)),
+        border: Border.all(color: AppColors.lightBlue.withValues(alpha: 0.1)),
       ),
       child: Text(label, style: AppTextStyles.caption.copyWith(color: AppColors.darkBlue)),
     );
@@ -652,7 +658,7 @@ class _WineDetailPageState extends State<WineDetailPage> {
             height: 50,
             width: double.infinity,
             decoration: BoxDecoration(
-              color: AppColors.lightBlue.withOpacity(0.05),
+              color: AppColors.lightBlue.withValues(alpha: 0.05),
               borderRadius: BorderRadius.circular(12),
             ),
             child: const Center(
@@ -677,7 +683,7 @@ class _WineDetailPageState extends State<WineDetailPage> {
             decoration: BoxDecoration(
               color: Colors.white,
               borderRadius: BorderRadius.circular(24),
-              boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 20)],
+              boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.03), blurRadius: 20)],
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -728,7 +734,7 @@ class _WineDetailPageState extends State<WineDetailPage> {
     final bottles = _effectiveBottles(wine);
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.lightBlue.withOpacity(0.1),
+        color: AppColors.lightBlue.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(16),
       ),
       child: Row(
@@ -865,9 +871,9 @@ class _WineDetailPageState extends State<WineDetailPage> {
                   width: double.infinity,
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
-                    color: AppColors.lightBlue.withOpacity(0.05),
+                    color: AppColors.lightBlue.withValues(alpha: 0.05),
                     borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: AppColors.lightBlue.withOpacity(0.2)),
+                    border: Border.all(color: AppColors.lightBlue.withValues(alpha: 0.2)),
                   ),
                   child: Text(
                     allLocations[locIndex],
@@ -888,10 +894,10 @@ class _WineDetailPageState extends State<WineDetailPage> {
                 decoration: BoxDecoration(
                   color: AppColors.baseWhite,
                   borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: AppColors.lightBlue.withOpacity(0.2)),
+                  border: Border.all(color: AppColors.lightBlue.withValues(alpha: 0.2)),
                   boxShadow: [
                     BoxShadow(
-                      color: AppColors.darkBlue.withOpacity(0.03),
+                      color: AppColors.darkBlue.withValues(alpha: 0.03),
                       blurRadius: 10,
                       offset: const Offset(0, 4),
                     ),
@@ -935,7 +941,7 @@ class _WineDetailPageState extends State<WineDetailPage> {
                                       decoration: BoxDecoration(
                                         color: isLast
                                             ? AppColors.darkBlue
-                                            : AppColors.lightBlue.withOpacity(0.15),
+                                            : AppColors.lightBlue.withValues(alpha: 0.15),
                                         borderRadius: BorderRadius.circular(8),
                                       ),
                                       child: Row(
@@ -1073,7 +1079,7 @@ class _BottleSizeQuantityPickerDialogState extends State<BottleSizeQuantityPicke
             const SizedBox(height: 8),
             Container(
               decoration: BoxDecoration(
-                color: AppColors.lightBlue.withOpacity(0.1),
+                color: AppColors.lightBlue.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(16),
               ),
               child: Row(
@@ -1124,7 +1130,7 @@ class _BottleSizeQuantityPickerDialogState extends State<BottleSizeQuantityPicke
         });
       },
       selectedColor: AppColors.darkBlue,
-      backgroundColor: AppColors.lightBlue.withOpacity(0.1),
+      backgroundColor: AppColors.lightBlue.withValues(alpha: 0.1),
       labelStyle: AppTextStyles.caption.copyWith(
         color: isSelected ? Colors.white : AppColors.darkBlue,
       ),
@@ -1152,7 +1158,7 @@ class _AddQuantityDialogState extends State<_AddQuantityDialog> {
       title: const Text('How many to add?'),
       content: Container(
         decoration: BoxDecoration(
-          color: AppColors.lightBlue.withOpacity(0.1),
+          color: AppColors.lightBlue.withValues(alpha: 0.1),
           borderRadius: BorderRadius.circular(16),
         ),
         child: Row(
@@ -1252,7 +1258,7 @@ class _AddSizeDialogState extends State<_AddSizeDialog> {
               children: [
                 Container(
                   decoration: BoxDecoration(
-                    color: AppColors.lightBlue.withOpacity(0.1),
+                    color: AppColors.lightBlue.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(16),
                   ),
                   child: Row(
@@ -1305,7 +1311,7 @@ class _AddSizeDialogState extends State<_AddSizeDialog> {
         });
       },
       selectedColor: AppColors.darkBlue,
-      backgroundColor: AppColors.lightBlue.withOpacity(0.1),
+      backgroundColor: AppColors.lightBlue.withValues(alpha: 0.1),
       labelStyle: AppTextStyles.caption.copyWith(
         color: isSelected ? Colors.white : AppColors.darkBlue,
       ),
@@ -1421,7 +1427,7 @@ class _LogPurchaseDialogState extends State<_LogPurchaseDialog> {
             const SizedBox(height: 8),
             Container(
               decoration: BoxDecoration(
-                color: AppColors.lightBlue.withOpacity(0.1),
+                color: AppColors.lightBlue.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(16),
               ),
               child: Row(
@@ -1487,7 +1493,7 @@ class _LogPurchaseDialogState extends State<_LogPurchaseDialog> {
                   selected: _selectedSize == null && !_isCustomSize,
                   onSelected: (_) => setState(() { _selectedSize = null; _isCustomSize = false; }),
                   selectedColor: AppColors.darkBlue,
-                  backgroundColor: AppColors.lightBlue.withOpacity(0.1),
+                  backgroundColor: AppColors.lightBlue.withValues(alpha: 0.1),
                   labelStyle: AppTextStyles.caption.copyWith(
                     color: (_selectedSize == null && !_isCustomSize) ? Colors.white : AppColors.darkBlue,
                   ),
@@ -1499,7 +1505,7 @@ class _LogPurchaseDialogState extends State<_LogPurchaseDialog> {
                   selected: _selectedSize == size && !_isCustomSize,
                   onSelected: (_) => setState(() { _selectedSize = size; _isCustomSize = false; }),
                   selectedColor: AppColors.darkBlue,
-                  backgroundColor: AppColors.lightBlue.withOpacity(0.1),
+                  backgroundColor: AppColors.lightBlue.withValues(alpha: 0.1),
                   labelStyle: AppTextStyles.caption.copyWith(
                     color: (_selectedSize == size && !_isCustomSize) ? Colors.white : AppColors.darkBlue,
                   ),
@@ -1511,7 +1517,7 @@ class _LogPurchaseDialogState extends State<_LogPurchaseDialog> {
                   selected: _isCustomSize,
                   onSelected: (_) => setState(() { _isCustomSize = true; _selectedSize = null; }),
                   selectedColor: AppColors.darkBlue,
-                  backgroundColor: AppColors.lightBlue.withOpacity(0.1),
+                  backgroundColor: AppColors.lightBlue.withValues(alpha: 0.1),
                   labelStyle: AppTextStyles.caption.copyWith(
                     color: _isCustomSize ? Colors.white : AppColors.darkBlue,
                   ),
@@ -1911,7 +1917,7 @@ class _EditWineDialogState extends State<EditWineDialog> {
                     if (selected) setState(() => _selectedType = type);
                   },
                   selectedColor: AppColors.darkBlue,
-                  backgroundColor: AppColors.lightBlue.withOpacity(0.1),
+                  backgroundColor: AppColors.lightBlue.withValues(alpha: 0.1),
                   labelStyle: AppTextStyles.body.copyWith(
                     color: isSelected ? Colors.white : AppColors.darkBlue,
                     fontSize: 13,
@@ -1942,7 +1948,7 @@ class _PriceTile extends StatelessWidget {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.lightBlue.withOpacity(0.1)),
+        border: Border.all(color: AppColors.lightBlue.withValues(alpha: 0.1)),
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -1974,7 +1980,7 @@ class _ScoreTile extends StatelessWidget {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.lightBlue.withOpacity(0.1)),
+        border: Border.all(color: AppColors.lightBlue.withValues(alpha: 0.1)),
       ),
       child: Row(
         children: [
@@ -2353,7 +2359,7 @@ class _StorageLocationDialogState extends State<StorageLocationDialog> {
                       decoration: BoxDecoration(
                         color: isDisabled
                             ? Colors.grey.shade300
-                            : (isSelected ? AppColors.darkBlue : AppColors.lightBlue.withOpacity(0.1)),
+                            : (isSelected ? AppColors.darkBlue : AppColors.lightBlue.withValues(alpha: 0.1)),
                         borderRadius: BorderRadius.circular(8),
                         border: Border.all(color: isSelected ? AppColors.darkBlue : Colors.transparent),
                       ),

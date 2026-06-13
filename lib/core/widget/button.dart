@@ -28,7 +28,7 @@ class AppButton extends StatelessWidget {
           backgroundColor: isSecondary ? AppColors.lightGreen : AppColors.darkBlue,
           foregroundColor: isSecondary ? AppColors.textMain : AppColors.baseWhite,
           elevation: 0,
-          shadowColor: AppColors.accentBlue.withOpacity(0.2),
+          shadowColor: AppColors.accentBlue.withValues(alpha: 0.2),
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
         ),
         child: isLoading

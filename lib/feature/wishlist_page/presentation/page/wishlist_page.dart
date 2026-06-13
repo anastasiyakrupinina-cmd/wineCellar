@@ -61,7 +61,7 @@ class _WishlistPageState extends State<WishlistPage> {
                     Icon(
                       Icons.bookmark_border,
                       size: 80,
-                      color: AppColors.lightBlue.withOpacity(0.5),
+                      color: AppColors.lightBlue.withValues(alpha: 0.5),
                     ),
                     const SizedBox(height: 16),
                     Text(
@@ -115,7 +115,7 @@ class _WishlistCard extends StatelessWidget {
           borderRadius: BorderRadius.circular(24),
           boxShadow: [
             BoxShadow(
-              color: AppColors.darkBlue.withOpacity(0.05),
+              color: AppColors.darkBlue.withValues(alpha: 0.05),
               blurRadius: 20,
               offset: const Offset(0, 10),
             ),
@@ -131,12 +131,12 @@ class _WishlistCard extends StatelessWidget {
                   ClipRRect(
                     borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
                     child: Container(
-                      color: AppColors.lightBlue.withOpacity(0.2),
+                      color: AppColors.lightBlue.withValues(alpha: 0.2),
                       child: wine.imageUrl != null && wine.imageUrl!.isNotEmpty
                           ? Image.network(
                               wine.imageUrl!,
                               fit: BoxFit.cover,
-                              errorBuilder: (_, __, ___) =>
+                              errorBuilder: (_, _, _) =>
                                   Center(child: AbstractWineBottle(type: wine.type, size: 110)),
                             )
                           : Center(child: AbstractWineBottle(type: wine.type, size: 110)),
@@ -150,11 +150,11 @@ class _WishlistCard extends StatelessWidget {
                       child: Container(
                         padding: const EdgeInsets.all(6),
                         decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.9),
+                          color: Colors.white.withValues(alpha: 0.9),
                           shape: BoxShape.circle,
                           boxShadow: [
                             BoxShadow(
-                              color: Colors.black.withOpacity(0.08),
+                              color: Colors.black.withValues(alpha: 0.08),
                               blurRadius: 4,
                             ),
                           ],

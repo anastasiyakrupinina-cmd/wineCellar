@@ -8,7 +8,7 @@
 	<true/>
 	<key>keychain-access-groups</key>
 	<array>
-		<string>$(AppIdentifierPrefix)com.example.homeWine</string>
+		<string>$(AppIdentifierPrefix)com.anastasiya.wineCellar</string>
 	</array>
 </dict>
 </plist>

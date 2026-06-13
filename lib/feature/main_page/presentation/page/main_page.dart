@@ -586,7 +586,7 @@ class _AddWineFormState extends State<_AddWineForm> {
                         if (selected) setState(() => _selectedType = type);
                       },
                       selectedColor: AppColors.darkBlue,
-                      backgroundColor: AppColors.lightBlue.withOpacity(0.1),
+                      backgroundColor: AppColors.lightBlue.withValues(alpha: 0.1),
                       labelStyle: AppTextStyles.body.copyWith(
                         color: isSelected ? Colors.white : AppColors.darkBlue,
                         fontSize: 13,
@@ -662,7 +662,7 @@ class _AddWineFormState extends State<_AddWineForm> {
                           _selectedBottleSize = size;
                         }),
                         selectedColor: AppColors.darkBlue,
-                        backgroundColor: AppColors.lightBlue.withOpacity(0.1),
+                        backgroundColor: AppColors.lightBlue.withValues(alpha: 0.1),
                         labelStyle: AppTextStyles.caption.copyWith(
                           color: isSelected ? Colors.white : AppColors.darkBlue,
                         ),
@@ -678,7 +678,7 @@ class _AddWineFormState extends State<_AddWineForm> {
                       selected: _isCustomBottleSize,
                       onSelected: (_) => setState(() => _isCustomBottleSize = true),
                       selectedColor: AppColors.darkBlue,
-                      backgroundColor: AppColors.lightBlue.withOpacity(0.1),
+                      backgroundColor: AppColors.lightBlue.withValues(alpha: 0.1),
                       labelStyle: AppTextStyles.caption.copyWith(
                         color: _isCustomBottleSize ? Colors.white : AppColors.darkBlue,
                       ),

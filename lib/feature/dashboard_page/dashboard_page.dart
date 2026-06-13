@@ -39,7 +39,7 @@ class DashboardPage extends StatelessWidget {
       width: 80,
       decoration: BoxDecoration(
         color: AppColors.baseWhite,
-        border: Border(right: BorderSide(color: AppColors.darkBlue.withOpacity(0.05))),
+        border: Border(right: BorderSide(color: AppColors.darkBlue.withValues(alpha: 0.05))),
       ),
       child: Column(
         children: [
@@ -102,7 +102,7 @@ class DashboardPage extends StatelessWidget {
         duration: const Duration(milliseconds: 300),
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
-          color: isActive ? AppColors.darkBlue.withOpacity(0.05) : Colors.transparent,
+          color: isActive ? AppColors.darkBlue.withValues(alpha: 0.05) : Colors.transparent,
           borderRadius: BorderRadius.circular(16),
         ),
         child: Icon(
@@ -120,12 +120,12 @@ class DashboardPage extends StatelessWidget {
         margin: const EdgeInsets.only(left: 24, right: 24, bottom: 16),
         height: 64,
         decoration: BoxDecoration(
-          color: AppColors.baseWhite.withOpacity(0.7),
+          color: AppColors.baseWhite.withValues(alpha: 0.7),
           borderRadius: BorderRadius.circular(32),
-          border: Border.all(color: Colors.white.withOpacity(0.5)),
+          border: Border.all(color: Colors.white.withValues(alpha: 0.5)),
           boxShadow: [
             BoxShadow(
-              color: AppColors.darkBlue.withOpacity(0.15),
+              color: AppColors.darkBlue.withValues(alpha: 0.15),
               blurRadius: 20,
               offset: const Offset(0, 8),
             ),

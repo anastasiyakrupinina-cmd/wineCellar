@@ -87,8 +87,8 @@ class _SplashPageState extends State<SplashPage> with SingleTickerProviderStateM
                           shape: BoxShape.circle,
                           gradient: RadialGradient(
                             colors: [
-                              AppColors.lightBlue.withOpacity(0.5),
-                              AppColors.lightBlue.withOpacity(0),
+                              AppColors.lightBlue.withValues(alpha: 0.5),
+                              AppColors.lightBlue.withValues(alpha: 0),
                             ],
                           ),
                         ),
