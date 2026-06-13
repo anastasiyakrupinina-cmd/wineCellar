@@ -2,6 +2,18 @@
 
 This guide will walk you through every step to run the WineCellar app on your Windows 11 computer — both as a Windows desktop app and on an Android phone simulator. No prior IT knowledge is required. Just follow each step in order.
 
+1. Скачать гит
+1. Скачали по ссылке проект Zip.
+Скачать флаттер как в синтуркции, ссылку поменять
+2. Скачать Visual Studio Code
+3. Cкачать Android Studio (More Actions -> Virtual Device Manager). Также  Settings, в поиске Android SDK: три галочки
+Android SDK Command-line Tools (latest)
+Android SDK Platform-Tools
+Android SDK Build-Tools
+3. Открыть проект в  Visual Studio 
+4.
+5. Открыть терминал в Visual Studio 
+
 ---
 
 ## What you will install
@@ -21,12 +33,8 @@ Total download size: approximately **10–15 GB**. Make sure you have enough fre
 
 Git is a tool that lets you download ("clone") the project code.
 
-1. Open your web browser (Edge, Chrome, etc.).
 2. Go to: **https://git-scm.com/download/win**
-3. The download should start automatically. If not, click **"Click here to download"**.
-4. Once downloaded, open the installer file (it will be in your Downloads folder).
-5. Click **Next** on every screen without changing anything. Then click **Install**.
-6. When finished, click **Finish**.
+3. Download and install Git
 
 ---
 
@@ -127,7 +135,7 @@ You now have a virtual Android phone. You can see it listed in Device Manager.
    ```
 3. Now download the project by running (replace the URL below with the actual repository URL you were given):
    ```
-   git clone https://github.com/YOUR_USERNAME/wine_cellar.git
+   git clone https://github.com/anastasiyakrupinina-cmd/wineCellar
    ```
    > If you received the project as a `.zip` file instead, unzip it to your Desktop and skip this step.
 4. Move into the project folder:
@@ -208,9 +216,8 @@ This will build and launch the WineCellar app as a regular Windows window on you
 The WineCellar app uses your **University of Vienna (u:account)** credentials to log in and sync your data:
 
 - **Username**: your university email address (e.g., `a12345678@unet.univie.ac.at`)
-- **Password**: your university password
+- **Password**: your ucloud app password. Generate it at ucloud.univie.ac.at -> Settings -> Security -> Devices & Sessions
 
-If you do not have a University of Vienna account, you will not be able to log in. Contact the app developer for access.
 
 ---
 

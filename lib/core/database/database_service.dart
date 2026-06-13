@@ -24,7 +24,7 @@ class DatabaseService {
 
   Future<void> init() async {
     if (_db != null) return;
-    if (Platform.isWindows || Platform.isLinux) {
+    if (Platform.isWindows || Platform.isLinux || Platform.isMacOS) {
       sqfliteFfiInit();
       databaseFactory = databaseFactoryFfi;
       final dir = await getApplicationDocumentsDirectory();

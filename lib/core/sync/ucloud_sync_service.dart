@@ -3,6 +3,7 @@ import 'dart:typed_data';
 
 import 'package:dio/dio.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:wine_cellar/core/database/database_service.dart';
 import 'package:injectable/injectable.dart';
 import 'package:webdav_client/webdav_client.dart' as webdav;
@@ -23,6 +24,9 @@ class UCloudSyncService {
   static const int _connectTimeoutMs = 10000; // 10 s
   static const int _receiveTimeoutMs = 30000; // 30 s
 
+  // macOS/Windows: Keychain requires proper code signing; use SharedPreferences instead.
+  static bool get _useSecureStorage => Platform.isAndroid || Platform.isIOS;
+
   final FlutterSecureStorage _secureStorage = const FlutterSecureStorage();
   final DatabaseService _databaseService;
 
@@ -30,51 +34,84 @@ class UCloudSyncService {
 
   UCloudSyncService(this._databaseService);
 
-  
-
   Future<bool> hasCredentials() async {
-    final username = await _secureStorage.read(key: _usernameKey);
-    final password = await _secureStorage.read(key: _passwordKey);
-    return username != null && password != null && username.isNotEmpty && password.isNotEmpty;
+    if (_useSecureStorage) {
+      final username = await _secureStorage.read(key: _usernameKey);
+      final password = await _secureStorage.read(key: _passwordKey);
+      return username != null && password != null && username.isNotEmpty && password.isNotEmpty;
+    } else {
+      final prefs = await SharedPreferences.getInstance();
+      final username = prefs.getString(_usernameKey);
+      final password = prefs.getString(_passwordKey);
+      return username != null && password != null && username.isNotEmpty && password.isNotEmpty;
+    }
   }
 
   Future<void> saveCredentials(String username, String password) async {
-    await _secureStorage.write(key: _usernameKey, value: username);
-    await _secureStorage.write(key: _passwordKey, value: password);
+    if (_useSecureStorage) {
+      await _secureStorage.write(key: _usernameKey, value: username);
+      await _secureStorage.write(key: _passwordKey, value: password);
+    } else {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString(_usernameKey, username);
+      await prefs.setString(_passwordKey, password);
+    }
   }
 
   /// Returns the stored username (university email).
   Future<String?> getCurrentUsername() async {
-    return _secureStorage.read(key: _usernameKey);
+    if (_useSecureStorage) {
+      return _secureStorage.read(key: _usernameKey);
+    } else {
+      final prefs = await SharedPreferences.getInstance();
+      return prefs.getString(_usernameKey);
+    }
   }
 
-  
   Future<void> signOut() async {
-    await _secureStorage.delete(key: _usernameKey);
-    await _secureStorage.delete(key: _passwordKey);
+    if (_useSecureStorage) {
+      await _secureStorage.delete(key: _usernameKey);
+      await _secureStorage.delete(key: _passwordKey);
+    } else {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.remove(_usernameKey);
+      await prefs.remove(_passwordKey);
+    }
   }
 
  
   Future<bool> validateCredentials(String username, String password) async {
+    final testClient = webdav.newClient(
+      _buildWebDavBase(username),
+      user: username,
+      password: password,
+      debug: false,
+    );
+    testClient.setConnectTimeout(_connectTimeoutMs);
+    testClient.setReceiveTimeout(_receiveTimeoutMs);
     try {
-      final testClient = webdav.newClient(
-        _buildWebDavBase(username),
-        user: username,
-        password: password,
-        debug: false,
-      );
-      testClient.setConnectTimeout(_connectTimeoutMs);
-      testClient.setReceiveTimeout(_receiveTimeoutMs);
       await testClient.readDir('/');
       return true;
-    } catch (_) {
-      return false;
+    } on DioException catch (e) {
+      // 401/403 = wrong credentials; anything else = network/SSL problem → rethrow
+      if (e.response?.statusCode == 401 || e.response?.statusCode == 403) {
+        return false;
+      }
+      rethrow;
     }
   }
 
   Future<webdav.Client?> _getClient() async {
-    final username = await _secureStorage.read(key: _usernameKey);
-    final password = await _secureStorage.read(key: _passwordKey);
+    String? username;
+    String? password;
+    if (_useSecureStorage) {
+      username = await _secureStorage.read(key: _usernameKey);
+      password = await _secureStorage.read(key: _passwordKey);
+    } else {
+      final prefs = await SharedPreferences.getInstance();
+      username = prefs.getString(_usernameKey);
+      password = prefs.getString(_passwordKey);
+    }
     if (username == null || password == null || username.isEmpty || password.isEmpty) {
       return null;
     }

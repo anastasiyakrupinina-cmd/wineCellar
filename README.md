@@ -1,17 +1,96 @@
 # Wine Cellar
 
-A new Flutter project.
+A personal wine cellar management app built with Flutter as a bachelor thesis project at the **University of Vienna**, Faculty of Computer Science.
+
+---
+
+## About
+
+Wine Cellar is a cross-platform mobile and desktop application that lets you catalogue, track, and manage your personal wine collection. It stores all data locally on your device and syncs to the University of Vienna's cloud storage (u:cloud) so your collection is available across all your devices.
+
+---
+
+## Features
+
+- **Wine catalog** — add wines with details such as name, vintage, winery, region, country, grape varieties, alcohol content, food pairings, and critic scores
+- **Storage management** — assign cellar locations and track bottle quantities per size
+- **Search & filter** — find wines by name, type, region, vintage, and more
+- **Wishlist** — save wines you want to acquire
+- **Archive** — keep a record of wines you have finished
+- **Purchase history** — log when and where bottles were bought
+- **u:cloud sync** — automatic backup and sync via WebDAV using your University of Vienna (u:account) credentials; data is uploaded when the app goes to the background and downloaded on the next launch
+
+---
+
+## Tech Stack
+
+| Layer | Technology |
+|---|---|
+| Framework | Flutter / Dart |
+| State management | flutter_bloc (Cubit) |
+| Navigation | auto_route |
+| Dependency injection | get_it + injectable |
+| Local database | SQLite via sqflite |
+| Cloud sync | WebDAV (u:cloud, University of Vienna) |
+| Secure credential storage | flutter_secure_storage |
+
+---
+
+## Supported Platforms
+
+- Android
+- Windows (desktop)
+- iOS
+- macOS
+
+---
 
 ## Getting Started
 
-This project is a starting point for a Flutter application.
+See [SETUP_GUIDE.md](SETUP_GUIDE.md) for a full step-by-step installation guide (includes Flutter, Android Studio, and Windows build tools setup).
 
-A few resources to get you started if this is your first Flutter project:
+### Quick start
 
-- [Learn Flutter](https://docs.flutter.dev/get-started/learn-flutter)
-- [Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Flutter learning resources](https://docs.flutter.dev/reference/learning-resources)
+```bash
+# Install dependencies
+flutter pub get
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+# Run on Android emulator
+flutter run -d android
+
+# Run as a Windows desktop app
+flutter run -d windows
+```
+
+### Login
+
+The app uses your University of Vienna **u:account** credentials:
+
+- **Username**: your university email (e.g. `a12345678@unet.univie.ac.at`)
+- **Password**: your ucloud app password — generate it at [ucloud.univie.ac.at](https://ucloud.univie.ac.at) under Settings → Security → Devices & Sessions
+
+---
+
+## Project Structure
+
+```
+lib/
+  core/           # Shared infrastructure (database, router, theme, sync, DI)
+  feature/
+    wine/         # Wine data models and repository
+    dashboard_page/
+    search_page/
+    wishlist_page/
+    archive_page/
+    manage_storage_page/
+    purchase_history/
+    profile_page/
+    login_page/
+```
+
+---
+
+## Author
+
+Anastasiia Krupinina  
+Bachelor's thesis — University of Vienna, Faculty of Computer Science
