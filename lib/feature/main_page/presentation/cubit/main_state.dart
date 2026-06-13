@@ -1,5 +1,5 @@
 import 'package:flutter/foundation.dart';
-import 'package:home_wine/feature/wine/data/models/wine_model.dart';
+import 'package:wine_cellar/feature/wine/data/models/wine_model.dart';
 
 @immutable
 sealed class MainState {}

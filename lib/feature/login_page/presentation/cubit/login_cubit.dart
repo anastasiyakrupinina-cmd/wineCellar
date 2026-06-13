@@ -1,6 +1,5 @@
-import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:home_wine/core/sync/ucloud_sync_service.dart';
+import 'package:wine_cellar/core/sync/ucloud_sync_service.dart';
 import 'package:injectable/injectable.dart';
 
 import 'login_state.dart';

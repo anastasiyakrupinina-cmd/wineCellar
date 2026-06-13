@@ -1,7 +1,7 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:home_wine/feature/manage_storage_page/presentation/page/manage_storage_state.dart';
-import 'package:home_wine/feature/profile_page/data/repository/profile_repository.dart';
-import 'package:home_wine/feature/profile_page/data/repository/storage_model.dart';
+import 'package:wine_cellar/feature/manage_storage_page/presentation/page/manage_storage_state.dart';
+import 'package:wine_cellar/feature/profile_page/data/repository/profile_repository.dart';
+import 'package:wine_cellar/feature/profile_page/data/repository/storage_model.dart';
 import 'package:injectable/injectable.dart';
 
 @injectable
@@ -37,8 +37,6 @@ class ManageStorageCubit extends Cubit<ManageStorageState> {
   Future<void> deleteCabinet(CabinetModel cabinet) async {
     try {
       await _repository.deleteCabinet(cabinet.id);
-      // ON DELETE CASCADE removes shelves and positions.
-      // cellarLocation is computed from positions on the next load — no manual update needed.
       await loadCabinets();
     } catch (e) {
       emit(ManageStorageError(e.toString()));

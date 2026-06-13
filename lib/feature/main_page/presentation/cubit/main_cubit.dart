@@ -1,8 +1,8 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:home_wine/feature/main_page/data/reposiotry/main_repository.dart';
-import 'package:home_wine/feature/profile_page/data/repository/profile_repository.dart';
-import 'package:home_wine/feature/wine/data/models/wine_bottle.dart';
-import 'package:home_wine/feature/wine/data/models/wine_model.dart';
+import 'package:wine_cellar/feature/main_page/data/reposiotry/main_repository.dart';
+import 'package:wine_cellar/feature/profile_page/data/repository/profile_repository.dart';
+import 'package:wine_cellar/feature/wine/data/models/wine_bottle.dart';
+import 'package:wine_cellar/feature/wine/data/models/wine_model.dart';
 import 'package:injectable/injectable.dart';
 
 import 'main_state.dart';

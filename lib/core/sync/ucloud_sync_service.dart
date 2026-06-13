@@ -2,9 +2,8 @@ import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:dio/dio.dart';
-import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
-import 'package:home_wine/core/database/database_service.dart';
+import 'package:wine_cellar/core/database/database_service.dart';
 import 'package:injectable/injectable.dart';
 import 'package:webdav_client/webdav_client.dart' as webdav;
 
@@ -44,21 +43,19 @@ class UCloudSyncService {
     await _secureStorage.write(key: _passwordKey, value: password);
   }
 
-  /// Returns the stored username (full university email), or null if not set.
+  /// Returns the stored username (university email).
   Future<String?> getCurrentUsername() async {
     return _secureStorage.read(key: _usernameKey);
   }
 
-  /// Clears stored credentials — effectively signs the user out.
+  
   Future<void> signOut() async {
     await _secureStorage.delete(key: _usernameKey);
     await _secureStorage.delete(key: _passwordKey);
   }
 
-  /// Validates credentials by making a real WebDAV request.
-  /// Returns true if the server accepts them, false on 401 or any error.
+ 
   Future<bool> validateCredentials(String username, String password) async {
-    if (kIsWeb) return false;
     try {
       final testClient = webdav.newClient(
         _buildWebDavBase(username),
@@ -92,10 +89,8 @@ class UCloudSyncService {
     return client;
   }
 
-  /// Downloads the remote .db file and overwrites the local one.
-  /// Silently skips if the remote file does not exist yet (404) or network fails.
+  /// Downloads the remote .db file and overwrites the local one, skips if the remote file does not exist yet.
   Future<void> downloadDb() async {
-    if (kIsWeb) return;
     try {
       final client = await _getClient();
       if (client == null) return;
@@ -104,11 +99,11 @@ class UCloudSyncService {
       final file = File(_databaseService.dbPath);
       await file.writeAsBytes(Uint8List.fromList(bytes));
     } on DioException catch (e) {
-      // 404 = file not yet uploaded — silently skip on first launch
+      // 404 = file not yet uploaded
       if (e.response?.statusCode == 404) return;
-      // Any other network error: silently skip
+      // Any other network error: skip
     } catch (_) {
-      // Timeout, IO error, etc. — silently skip
+      // Timeout, IO error, etc. — skip
     }
   }
 
@@ -118,7 +113,6 @@ class UCloudSyncService {
   /// Concurrent calls are collapsed: if an upload is already running the new
   /// request is silently dropped (the in-flight upload already has the latest data).
   Future<void> uploadDb() async {
-    if (kIsWeb) return;
     if (_isUploading) {
       print('[UCloud] uploadDb() skipped: already uploading');
       return;
@@ -170,7 +164,6 @@ class UCloudSyncService {
   /// Called on app start (both first login and returning user).
   /// Resolves the DB path, downloads the remote file if it exists, then opens the DB.
   Future<void> syncOnStart() async {
-    if (kIsWeb) return;
     // init() resolves _dbPath (idempotent if already open).
     // Without this, downloadDb() throws StateError on first login after a
     // fresh install because _dbPath is null until init() runs at least once.
@@ -196,7 +189,6 @@ class UCloudSyncService {
 
   /// Called when the app goes to background or becomes inactive.
   Future<void> syncOnClose() async {
-    if (kIsWeb) return;
     await uploadDb();
   }
 }

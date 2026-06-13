@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:home_wine/core/colors/app_colors.dart';
+import 'package:wine_cellar/core/colors/app_colors.dart';
 
 class AppTextStyles {
   static TextStyle h1 = GoogleFonts.montserrat(

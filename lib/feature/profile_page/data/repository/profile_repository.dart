@@ -1,6 +1,6 @@
-import 'package:home_wine/core/database/database_service.dart';
-import 'package:home_wine/core/sync/ucloud_sync_service.dart';
-import 'package:home_wine/feature/profile_page/data/repository/storage_model.dart';
+import 'package:wine_cellar/core/database/database_service.dart';
+import 'package:wine_cellar/core/sync/ucloud_sync_service.dart';
+import 'package:wine_cellar/feature/profile_page/data/repository/storage_model.dart';
 import 'package:injectable/injectable.dart';
 import 'package:sqflite/sqflite.dart';
 
@@ -11,11 +11,9 @@ abstract class ProfileRepository {
   Future<List<CabinetModel>> getStorageLocations();
   Future<void> deleteCabinet(String cabinetId);
 
-  /// Returns IDs of all wines that occupy at least one spot in [cabinetId].
   Future<List<String>> getWineIdsInCabinet(String cabinetId);
 
   /// Frees the [count] highest-indexed spots occupied by [wineId].
-  /// cellarLocation is recomputed from positions on the next getLocalWines() call.
   Future<void> freeSpots(String wineId, int count);
 }
 
@@ -47,7 +45,7 @@ class ProfileRepositoryImpl implements ProfileRepository {
         {'id': cabinet.id, 'name': cabinet.name},
         conflictAlgorithm: ConflictAlgorithm.replace,
       );
-      // Deleting shelves cascades to positions automatically.
+
       await txn.delete('shelves', where: 'cabinet_id = ?', whereArgs: [cabinet.id]);
       for (final shelf in cabinet.shelves) {
         await txn.insert('shelves', {
@@ -136,7 +134,6 @@ class ProfileRepositoryImpl implements ProfileRepository {
     await _databaseService.db.delete(
       'cabinets', where: 'id = ?', whereArgs: [cabinetId],
     );
-    // ON DELETE CASCADE removes shelves and positions automatically.
     _syncService.syncOnClose();
   }
 

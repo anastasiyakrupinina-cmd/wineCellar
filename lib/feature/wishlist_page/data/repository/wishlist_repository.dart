@@ -1,7 +1,7 @@
 import 'dart:convert';
 
-import 'package:home_wine/core/database/database_service.dart';
-import 'package:home_wine/feature/wine/data/models/wine_model.dart';
+import 'package:wine_cellar/core/database/database_service.dart';
+import 'package:wine_cellar/feature/wine/data/models/wine_model.dart';
 import 'package:sqflite/sqflite.dart';
 
 abstract class WishlistRepository {
@@ -43,6 +43,26 @@ class WishlistRepositoryImpl implements WishlistRepository {
     };
     await db.insert('all_wines', map, conflictAlgorithm: ConflictAlgorithm.ignore);
     await db.update('all_wines', map, where: 'id = ?', whereArgs: [wine.id]);
+    await _populateLookupTables(db, wine);
+  }
+
+  Future<void> _populateLookupTables(DatabaseExecutor db, WineModel wine) async {
+    if (wine.winery != null && wine.winery!.isNotEmpty) {
+      await db.insert('wineries', {'name': wine.winery}, conflictAlgorithm: ConflictAlgorithm.ignore);
+    }
+    if (wine.type != null && wine.type!.isNotEmpty) {
+      await db.insert('wine_types', {'name': wine.type}, conflictAlgorithm: ConflictAlgorithm.ignore);
+    }
+    if (wine.country != null && wine.country!.isNotEmpty) {
+      await db.insert('countries', {'name': wine.country}, conflictAlgorithm: ConflictAlgorithm.ignore);
+    }
+    if (wine.grapes != null) {
+      for (final grape in wine.grapes!) {
+        if (grape.isNotEmpty) {
+          await db.insert('grapes', {'name': grape}, conflictAlgorithm: ConflictAlgorithm.ignore);
+        }
+      }
+    }
   }
 
   @override
@@ -77,7 +97,7 @@ class WishlistRepositoryImpl implements WishlistRepository {
   Future<void> addToWishlist(WineModel wine) async {
     await _db.db.transaction((txn) async {
       await _upsertAllWines(txn, wine);
-      // IGNORE preserves added_at if already wishlisted
+    
       await txn.insert(
         'wishlist',
         {'wine_id': wine.id, 'added_at': DateTime.now().millisecondsSinceEpoch},

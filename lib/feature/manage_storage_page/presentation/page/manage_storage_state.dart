@@ -1,5 +1,5 @@
 import 'package:flutter/foundation.dart';
-import 'package:home_wine/feature/profile_page/data/repository/storage_model.dart';
+import 'package:wine_cellar/feature/profile_page/data/repository/storage_model.dart';
 
 @immutable
 sealed class ManageStorageState {}

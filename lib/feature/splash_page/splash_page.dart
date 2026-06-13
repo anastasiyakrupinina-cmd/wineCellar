@@ -1,14 +1,13 @@
 import 'package:auto_route/auto_route.dart';
-import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
-import 'package:home_wine/core/colors/app_colors.dart';
-import 'package:home_wine/core/database/database_service.dart';
-import 'package:home_wine/core/dependencies/get_it.dart';
-import 'package:home_wine/core/router/app_router.dart';
-import 'package:home_wine/core/style/app_text_style.dart';
-import 'package:home_wine/core/sync/ucloud_sync_service.dart';
-import 'package:home_wine/feature/login_page/presentation/widget/line.dart';
-import 'package:home_wine/feature/wishlist_page/presentation/cubit/wishlist_cubit.dart';
+import 'package:wine_cellar/core/colors/app_colors.dart';
+import 'package:wine_cellar/core/database/database_service.dart';
+import 'package:wine_cellar/core/dependencies/get_it.dart';
+import 'package:wine_cellar/core/router/app_router.dart';
+import 'package:wine_cellar/core/style/app_text_style.dart';
+import 'package:wine_cellar/core/sync/ucloud_sync_service.dart';
+import 'package:wine_cellar/feature/login_page/presentation/widget/line.dart';
+import 'package:wine_cellar/feature/wishlist_page/presentation/cubit/wishlist_cubit.dart';
 
 @RoutePage()
 class SplashPage extends StatefulWidget {
@@ -30,11 +29,6 @@ class _SplashPageState extends State<SplashPage> with SingleTickerProviderStateM
   }
 
   Future<void> _checkAuth() async {
-    if (kIsWeb) {
-      if (mounted) context.router.replace(const LoginRoute());
-      return;
-    }
-
     final hasCreds = await getIt<UCloudSyncService>().hasCredentials();
     if (!mounted) return;
 

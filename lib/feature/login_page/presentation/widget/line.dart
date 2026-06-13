@@ -1,7 +1,7 @@
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
-import 'package:home_wine/core/colors/app_colors.dart';
+import 'package:wine_cellar/core/colors/app_colors.dart';
 
 class WineLinesPainter extends CustomPainter {
   final double progress;

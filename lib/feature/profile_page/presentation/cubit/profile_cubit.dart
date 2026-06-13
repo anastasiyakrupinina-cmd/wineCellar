@@ -1,6 +1,6 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:home_wine/feature/profile_page/data/repository/profile_repository.dart';
-import 'package:home_wine/feature/profile_page/presentation/cubit/profile_state.dart';
+import 'package:wine_cellar/feature/profile_page/data/repository/profile_repository.dart';
+import 'package:wine_cellar/feature/profile_page/presentation/cubit/profile_state.dart';
 import 'package:injectable/injectable.dart';
 
 @injectable

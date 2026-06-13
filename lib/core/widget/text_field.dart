@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:home_wine/core/colors/app_colors.dart';
+import 'package:wine_cellar/core/colors/app_colors.dart';
 
 class AppTextField extends StatefulWidget {
   final String? label;
@@ -13,6 +13,7 @@ class AppTextField extends StatefulWidget {
   final String? Function(String?)? validator;
   final int? maxLines;
   final TextInputAction? textInputAction;
+  final FocusNode? focusNode;
 
   const AppTextField({
     super.key,
@@ -27,6 +28,7 @@ class AppTextField extends StatefulWidget {
     this.validator,
     this.maxLines,
     this.textInputAction,
+    this.focusNode,
   });
 
   @override
@@ -51,6 +53,7 @@ class _AppTextFieldState extends State<AppTextField> {
           ),
         TextFormField(
           controller: widget.controller,
+          focusNode: widget.focusNode,
           obscureText: widget.isPassword ? _obscureText : false,
           keyboardType: widget.keyboardType,
           validator: widget.validator,

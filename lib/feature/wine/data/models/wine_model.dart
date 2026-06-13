@@ -1,4 +1,4 @@
-import 'package:home_wine/feature/wine/data/models/wine_bottle.dart';
+import 'package:wine_cellar/feature/wine/data/models/wine_bottle.dart';
 
 class WineModel {
   final String id;

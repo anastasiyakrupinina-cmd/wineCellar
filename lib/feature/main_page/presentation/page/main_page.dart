@@ -3,19 +3,21 @@ import 'dart:async';
 import 'package:auto_route/auto_route.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:home_wine/app_settings_cubit.dart';
-import 'package:home_wine/core/colors/app_colors.dart';
-import 'package:home_wine/core/dependencies/get_it.dart';
-import 'package:home_wine/core/style/app_text_style.dart';
-import 'package:home_wine/core/widget/button.dart';
-import 'package:home_wine/core/widget/text_field.dart';
-import 'package:home_wine/feature/main_page/presentation/cubit/main_cubit.dart';
-import 'package:home_wine/feature/main_page/presentation/cubit/main_state.dart';
-import 'package:home_wine/feature/main_page/presentation/widget/app_bar.dart';
-import 'package:home_wine/feature/main_page/presentation/widget/main_list.dart';
-import 'package:home_wine/feature/search_page/presentation/page/wine_detail_page.dart';
-import 'package:home_wine/feature/wine/data/models/wine_bottle.dart';
-import 'package:home_wine/feature/wine/data/models/wine_model.dart';
+import 'package:wine_cellar/app_settings_cubit.dart';
+import 'package:wine_cellar/core/colors/app_colors.dart';
+import 'package:wine_cellar/core/dependencies/get_it.dart';
+import 'package:wine_cellar/core/style/app_text_style.dart';
+import 'package:wine_cellar/core/widget/button.dart';
+import 'package:wine_cellar/core/widget/text_field.dart';
+import 'package:wine_cellar/feature/main_page/presentation/cubit/main_cubit.dart';
+import 'package:wine_cellar/feature/main_page/presentation/cubit/main_state.dart';
+import 'package:wine_cellar/feature/main_page/presentation/widget/app_bar.dart';
+import 'package:wine_cellar/feature/main_page/presentation/widget/main_list.dart';
+import 'package:wine_cellar/feature/search_page/presentation/page/wine_detail_page.dart';
+import 'package:wine_cellar/feature/wine/data/models/catalog_filters.dart';
+import 'package:wine_cellar/feature/wine/data/models/wine_bottle.dart';
+import 'package:wine_cellar/feature/wine/data/models/wine_model.dart';
+import 'package:wine_cellar/feature/wine/data/repository/search_repository.dart';
 
 @RoutePage()
 class MainPage extends StatefulWidget {
@@ -32,6 +34,7 @@ class _MainPageState extends State<MainPage> with AutoRouteAwareStateMixin<MainP
   final TextEditingController _searchController = TextEditingController();
   Timer? _debounce;
   MainCubit? _mainCubit;
+  CatalogFilters _filterOptions = const CatalogFilters();
 
   @override
   void didPopNext() {
@@ -47,6 +50,14 @@ class _MainPageState extends State<MainPage> with AutoRouteAwareStateMixin<MainP
   void initState() {
     super.initState();
     _searchController.addListener(_onSearchChanged);
+    _loadFilterOptions();
+  }
+
+  Future<void> _loadFilterOptions() async {
+    try {
+      final options = await getIt<SearchRepository>().getFilterOptions();
+      if (mounted) setState(() => _filterOptions = options);
+    } catch (_) {}
   }
 
   void _onSearchChanged() {
@@ -71,10 +82,12 @@ class _MainPageState extends State<MainPage> with AutoRouteAwareStateMixin<MainP
       if (_searchQuery.isEmpty) return true;
       final query = _searchQuery.toLowerCase().trim();
       return w.name.toLowerCase().contains(query) ||
+          (w.winery?.toLowerCase().contains(query) ?? false) ||
           (w.region?.toLowerCase().contains(query) ?? false) ||
           (w.country?.toLowerCase().contains(query) ?? false) ||
           (w.vintage?.toString().contains(query) ?? false) ||
-          ((w.type ?? '').toLowerCase().contains(query));
+          ((w.type ?? '').toLowerCase().contains(query)) ||
+          (w.grapes?.any((g) => g.toLowerCase().contains(query)) ?? false);
     }).toList();
   }
 
@@ -220,9 +233,8 @@ class _MainPageState extends State<MainPage> with AutoRouteAwareStateMixin<MainP
         child: _AddWineForm(cubit: cubit),
       ),
     ).then((_) {
-      
-      
       cubit.loadWines();
+      _loadFilterOptions();
     });
   }
 
@@ -420,6 +432,11 @@ class _MainPageState extends State<MainPage> with AutoRouteAwareStateMixin<MainP
                       selectedCabinet: _selectedCabinet,
                       onCabinetSelected: (name) => setState(() => _selectedCabinet = name),
                       onWineLongPress: (wine) => _showEditWineBottomSheet(context, wine),
+                      allOptions: _filterOptions.allOptions,
+                      onSuggestionTap: (s) {
+                        _searchController.text = s;
+                        setState(() => _searchQuery = s);
+                      },
                     );
                   }
                   return const SizedBox.shrink();
@@ -458,8 +475,8 @@ class _AddWineFormState extends State<_AddWineForm> {
   bool _isCustomBottleSize = false;
   final _customBottleSizeController = TextEditingController();
   int _quantity = 1;
-  String? _cellarLocation;
   late final String _wineId;
+  CatalogFilters _filterOptions = const CatalogFilters();
 
   final List<String> _types = ['Red', 'White', 'Rose', 'Sparkling', 'Dessert'];
 
@@ -480,10 +497,12 @@ class _AddWineFormState extends State<_AddWineForm> {
       _noticeController.text = widget.wineToEdit!.notice ?? '';
       _selectedType = wine.type ?? 'Red';
       _quantity = wine.quantity;
-      _cellarLocation = wine.cellarLocation;
     } else {
       _wineId = DateTime.now().millisecondsSinceEpoch.toString();
     }
+    getIt<SearchRepository>().getFilterOptions().then((opts) {
+      if (mounted) setState(() => _filterOptions = opts);
+    });
   }
 
   @override
@@ -535,16 +554,21 @@ class _AddWineFormState extends State<_AddWineForm> {
               ],
             ),
             const SizedBox(height: 24),
-            AppTextField(
+            _AutocompleteFormField(
               label: 'Wine Name *',
               hint: 'e.g. Chateau Margaux',
               controller: _nameController,
+              options: _filterOptions.names,
               validator: (v) => v == null || v.trim().isEmpty ? 'Required' : null,
             ),
             const SizedBox(height: 16),
-            AppTextField(label: 'Winery', hint: 'e.g. Château Margaux', controller: _wineryController),
-            const SizedBox(height: 16),
-            AppTextField(label: 'Grape Varieties', hint: 'e.g. Cabernet Sauvignon, Merlot', controller: _grapesController),
+            _AutocompleteFormField(
+              label: 'Grape Varieties',
+              hint: 'e.g. Cabernet Sauvignon, Merlot',
+              controller: _grapesController,
+              options: _filterOptions.grapes,
+              isMultiValue: true,
+            ),
             const SizedBox(height: 16),
             Text('Type', style: AppTextStyles.caption.copyWith(fontWeight: FontWeight.bold)),
             const SizedBox(height: 8),
@@ -576,13 +600,24 @@ class _AddWineFormState extends State<_AddWineForm> {
             ),
             const SizedBox(height: 16),
             Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Expanded(
-                  child: AppTextField(label: 'Country', hint: 'e.g. France', controller: _countryController),
+                  child: _AutocompleteFormField(
+                    label: 'Country',
+                    hint: 'e.g. France',
+                    controller: _countryController,
+                    options: _filterOptions.countries,
+                  ),
                 ),
                 const SizedBox(width: 16),
                 Expanded(
-                  child: AppTextField(label: 'Region', hint: 'e.g. Bordeaux', controller: _regionController),
+                  child: _AutocompleteFormField(
+                    label: 'Winery',
+                    hint: 'e.g. Ruffino',
+                    controller: _wineryController,
+                    options: _filterOptions.wineries,
+                  ),
                 ),
               ],
             ),
@@ -677,91 +712,37 @@ class _AddWineFormState extends State<_AddWineForm> {
               textInputAction: TextInputAction.done,
             ),
             const SizedBox(height: 24),
-            InkWell(
-              onTap: () async {
-                final dummyWine = WineModel(
-                  id: _wineId,
-                  name: _nameController.text.trim(),
-                  quantity: _quantity,
-                );
-                final res = await showDialog<Map<String, dynamic>>(
-                  context: context,
-                  builder: (ctx) => StorageLocationDialog(wine: dummyWine),
-                );
-                if (res != null) {
-                  setState(() {
-                    _cellarLocation = res['location'] as String;
-                    _quantity = res['quantity'] as int;
-                  });
-                }
-              },
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text('Storage Location', style: AppTextStyles.h2.copyWith(fontSize: 18)),
-                  const SizedBox(width: 16),
-                  Expanded(
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.end,
-                      children: [
-                        Flexible(
-                          child: Text(
-                            _cellarLocation?.isNotEmpty == true
-                                ? _cellarLocation!.replaceAll(' ; ', '\n')
-                                : 'Set location',
-                            textAlign: TextAlign.end,
-                            maxLines: 10,
-                            overflow: TextOverflow.ellipsis,
-                            style: TextStyle(
-                              color: _cellarLocation?.isNotEmpty == true
-                                  ? AppColors.darkBlue
-                                  : AppColors.textSecondary,
-                            ),
-                          ),
-                        ),
-                        const Icon(Icons.chevron_right, color: AppColors.textSecondary),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const Padding(padding: EdgeInsets.symmetric(vertical: 16), child: Divider(height: 1)),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text('Quantity', style: AppTextStyles.h2.copyWith(fontSize: 18)),
-                
-                
-                _cellarLocation != null && _cellarLocation!.isNotEmpty
-                    ? Text('$_quantity', style: AppTextStyles.h2.copyWith(fontSize: 18))
-                    : Container(
-                        decoration: BoxDecoration(
-                          color: AppColors.lightBlue.withOpacity(0.1),
-                          borderRadius: BorderRadius.circular(16),
-                        ),
-                        child: Row(
-                          children: [
-                            IconButton(
-                              icon: const Icon(Icons.remove, color: AppColors.darkBlue),
-                              onPressed: () {
-                                if (_quantity > 1) setState(() => _quantity--);
-                              },
-                            ),
-                            Text('$_quantity', style: AppTextStyles.h2.copyWith(fontSize: 18)),
-                            IconButton(
-                              icon: const Icon(Icons.add, color: AppColors.darkBlue),
-                              onPressed: () => setState(() => _quantity++),
-                            ),
-                          ],
-                        ),
+                Container(
+                  decoration: BoxDecoration(
+                    color: AppColors.lightBlue.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  child: Row(
+                    children: [
+                      IconButton(
+                        icon: const Icon(Icons.remove, color: AppColors.darkBlue),
+                        onPressed: () {
+                          if (_quantity > 1) setState(() => _quantity--);
+                        },
                       ),
+                      Text('$_quantity', style: AppTextStyles.h2.copyWith(fontSize: 18)),
+                      IconButton(
+                        icon: const Icon(Icons.add, color: AppColors.darkBlue),
+                        onPressed: () => setState(() => _quantity++),
+                      ),
+                    ],
+                  ),
+                ),
               ],
             ),
             const SizedBox(height: 32),
             AppButton(
               text: 'Save Wine',
-              onPressed: () {
+              onPressed: () async {
                 if (!_formKey.currentState!.validate()) return;
                 final bottleSize = _isCustomBottleSize
                     ? _customBottleSizeController.text.trim()
@@ -783,7 +764,6 @@ class _AddWineFormState extends State<_AddWineForm> {
                   description: _descriptionController.text.trim(),
                   notice: _noticeController.text.trim().isEmpty ? null : _noticeController.text.trim(),
                   quantity: _quantity,
-                  cellarLocation: _cellarLocation,
                   bottles: [
                     WineBottle(
                       id: '${_wineId}_${resolvedSize}_${DateTime.now().microsecondsSinceEpoch}',
@@ -793,7 +773,13 @@ class _AddWineFormState extends State<_AddWineForm> {
                     ),
                   ],
                 );
-                widget.cubit.saveWine(newWine);
+                await widget.cubit.saveWine(newWine);
+                if (!context.mounted) return;
+                await showDialog<Map<String, dynamic>>(
+                  context: context,
+                  builder: (ctx) => StorageLocationDialog(wine: newWine),
+                );
+                if (!context.mounted) return;
                 Navigator.pop(context);
               },
             ),
@@ -802,5 +788,183 @@ class _AddWineFormState extends State<_AddWineForm> {
       ),
     ),
   );
+  }
+}
+
+class _AutocompleteFormField extends StatefulWidget {
+  final String label;
+  final String hint;
+  final TextEditingController controller;
+  final List<String> options;
+  final String? Function(String?)? validator;
+  final bool isMultiValue;
+
+  const _AutocompleteFormField({
+    required this.label,
+    required this.hint,
+    required this.controller,
+    this.options = const [],
+    this.validator,
+    this.isMultiValue = false,
+  });
+
+  @override
+  State<_AutocompleteFormField> createState() => _AutocompleteFormFieldState();
+}
+
+class _AutocompleteFormFieldState extends State<_AutocompleteFormField> {
+  final FocusNode _focusNode = FocusNode();
+  final LayerLink _layerLink = LayerLink();
+  OverlayEntry? _overlayEntry;
+  List<String> _suggestions = [];
+  double _fieldWidth = 0;
+  bool _isSelecting = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _focusNode.addListener(_onFocusChanged);
+    widget.controller.addListener(_onTextChanged);
+  }
+
+  void _onFocusChanged() {
+    if (_focusNode.hasFocus) {
+      _onTextChanged();
+    } else {
+      _hideOverlay();
+    }
+  }
+
+  String _getQuery() {
+    if (widget.isMultiValue) {
+      return widget.controller.text.split(',').last.trim().toLowerCase();
+    }
+    return widget.controller.text.trim().toLowerCase();
+  }
+
+  void _onTextChanged() {
+    if (_isSelecting || !mounted || !_focusNode.hasFocus) return;
+    final q = _getQuery();
+    if (q.isEmpty) {
+      _hideOverlay();
+      return;
+    }
+    _suggestions = widget.options
+        .where((o) => o.toLowerCase().contains(q))
+        .take(6)
+        .toList();
+    if (_suggestions.isEmpty) {
+      _hideOverlay();
+    } else if (_overlayEntry == null) {
+      _showOverlay();
+    } else {
+      _overlayEntry!.markNeedsBuild();
+    }
+  }
+
+  void _showOverlay() {
+    if (!mounted) return;
+    _overlayEntry = OverlayEntry(
+      builder: (_) => CompositedTransformFollower(
+        link: _layerLink,
+        showWhenUnlinked: false,
+        targetAnchor: Alignment.bottomLeft,
+        followerAnchor: Alignment.topLeft,
+        child: Align(
+          alignment: Alignment.topLeft,
+          child: Material(
+            elevation: 6,
+            borderRadius: BorderRadius.circular(12),
+            color: Colors.white,
+            child: ConstrainedBox(
+              constraints: BoxConstraints(maxWidth: _fieldWidth, maxHeight: 280),
+              child: ListView.builder(
+                padding: const EdgeInsets.symmetric(vertical: 4),
+                shrinkWrap: true,
+                itemCount: _suggestions.length,
+                itemBuilder: (_, i) {
+                  final option = _suggestions[i];
+                  return InkWell(
+                    onTap: () => _selectOption(option),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 11),
+                      child: Row(
+                        children: [
+                          const Icon(Icons.search_rounded, size: 16, color: AppColors.textSecondary),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: Text(option, style: AppTextStyles.body.copyWith(fontSize: 14)),
+                          ),
+                        ],
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+    Overlay.of(context).insert(_overlayEntry!);
+  }
+
+  void _hideOverlay() {
+    _overlayEntry?.remove();
+    _overlayEntry = null;
+    _suggestions = [];
+  }
+
+  void _selectOption(String option) {
+    _isSelecting = true;
+    if (widget.isMultiValue) {
+      final parts = widget.controller.text.split(',');
+      final existing = parts
+          .sublist(0, parts.length - 1)
+          .map((p) => p.trim())
+          .where((p) => p.isNotEmpty)
+          .toList();
+      widget.controller.text = [...existing, option].join(', ');
+      widget.controller.selection = TextSelection.fromPosition(
+        TextPosition(offset: widget.controller.text.length),
+      );
+      _hideOverlay();
+    } else {
+      widget.controller.text = option;
+      widget.controller.selection = TextSelection.fromPosition(
+        TextPosition(offset: option.length),
+      );
+      _hideOverlay();
+      _focusNode.unfocus();
+    }
+    _isSelecting = false;
+  }
+
+  @override
+  void dispose() {
+    _focusNode.removeListener(_onFocusChanged);
+    widget.controller.removeListener(_onTextChanged);
+    _hideOverlay();
+    _focusNode.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        _fieldWidth = constraints.maxWidth;
+        return CompositedTransformTarget(
+          link: _layerLink,
+          child: AppTextField(
+            label: widget.label,
+            hint: widget.hint,
+            controller: widget.controller,
+            focusNode: _focusNode,
+            validator: widget.validator,
+          ),
+        );
+      },
+    );
   }
 }

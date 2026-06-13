@@ -1,15 +1,15 @@
 import 'package:auto_route/auto_route.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:home_wine/core/colors/app_colors.dart';
-import 'package:home_wine/core/router/app_router.dart';
-import 'package:home_wine/core/style/app_text_style.dart';
-import 'package:home_wine/core/widget/bottle_wine.dart';
-import 'package:home_wine/core/widget/text_field.dart';
-import 'package:home_wine/feature/main_page/presentation/cubit/main_cubit.dart';
-import 'package:home_wine/feature/wine/data/models/wine_model.dart';
+import 'package:wine_cellar/core/colors/app_colors.dart';
+import 'package:wine_cellar/core/router/app_router.dart';
+import 'package:wine_cellar/core/style/app_text_style.dart';
+import 'package:wine_cellar/core/widget/bottle_wine.dart';
+import 'package:wine_cellar/core/widget/text_field.dart';
+import 'package:wine_cellar/feature/main_page/presentation/cubit/main_cubit.dart';
+import 'package:wine_cellar/feature/wine/data/models/wine_model.dart';
 
-class MainWineList extends StatelessWidget {
+class MainWineList extends StatefulWidget {
   final TextEditingController searchController;
   final Map<String, Map<String, List<WineModel>>> groupedWines;
   final Map<String, int> totalWineCountById;
@@ -17,6 +17,8 @@ class MainWineList extends StatelessWidget {
   final String? selectedCabinet;
   final Function(String?) onCabinetSelected;
   final Function(WineModel) onWineLongPress;
+  final List<String> allOptions;
+  final void Function(String) onSuggestionTap;
 
   const MainWineList({
     super.key,
@@ -27,37 +29,89 @@ class MainWineList extends StatelessWidget {
     this.selectedCabinet,
     required this.onCabinetSelected,
     required this.onWineLongPress,
+    this.allOptions = const [],
+    required this.onSuggestionTap,
   });
 
   @override
+  State<MainWineList> createState() => _MainWineListState();
+}
+
+class _MainWineListState extends State<MainWineList> {
+  String _searchText = '';
+
+  @override
+  void initState() {
+    super.initState();
+    _searchText = widget.searchController.text;
+    widget.searchController.addListener(_onSearchChanged);
+  }
+
+  void _onSearchChanged() {
+    setState(() => _searchText = widget.searchController.text);
+  }
+
+  @override
+  void dispose() {
+    widget.searchController.removeListener(_onSearchChanged);
+    super.dispose();
+  }
+
+  List<String> _computeSuggestions() {
+    if (_searchText.isEmpty) return [];
+    final q = _searchText.toLowerCase();
+    final seen = <String>{};
+    return widget.allOptions.where((opt) {
+      final lower = opt.toLowerCase();
+      return lower.contains(q) && lower != q && seen.add(opt);
+    }).take(8).toList();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return RefreshIndicator(
-      edgeOffset: 120,
-      onRefresh: () => context.read<MainCubit>().loadWines(),
-      child: CustomScrollView(
-        physics: const AlwaysScrollableScrollPhysics(),
-        slivers: [
-          _buildSearchField(),
-          if (showCabinetView) ...[_buildCabinetNavigation(), _buildCabinetContent()] else _buildListView(),
-          const SliverToBoxAdapter(child: SizedBox(height: 100)),
-        ],
-      ),
+    final suggestions = _computeSuggestions();
+    return Stack(
+      children: [
+        RefreshIndicator(
+          edgeOffset: 120,
+          onRefresh: () => context.read<MainCubit>().loadWines(),
+          child: CustomScrollView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            slivers: [
+              _buildSearchField(),
+              if (widget.showCabinetView)
+                ...[_buildCabinetNavigation(), _buildCabinetContent()]
+              else
+                _buildListView(),
+              const SliverToBoxAdapter(child: SizedBox(height: 100)),
+            ],
+          ),
+        ),
+        if (suggestions.isNotEmpty)
+          Positioned(
+            // 120 (sliver top padding) + ~58 (field height) + 8 (sliver bottom padding)
+            top: 186,
+            left: 24,
+            right: 24,
+            child: _buildSuggestions(suggestions),
+          ),
+      ],
     );
   }
 
   Widget _buildSearchField() {
     return SliverPadding(
-      padding: const EdgeInsets.fromLTRB(24, 120, 24, 16),
+      padding: const EdgeInsets.fromLTRB(24, 120, 24, 8),
       sliver: SliverToBoxAdapter(
         child: ValueListenableBuilder<TextEditingValue>(
-          valueListenable: searchController,
+          valueListenable: widget.searchController,
           builder: (context, value, _) => AppTextField(
-            hint: 'Search by name, region, year ...',
-            controller: searchController,
+            hint: 'Search by name, country, grape...',
+            controller: widget.searchController,
             prefixIcon: Icons.search_rounded,
             suffixIcon: value.text.isNotEmpty ? Icons.close_rounded : null,
             onSuffixTap: () {
-              searchController.clear();
+              widget.searchController.clear();
               FocusManager.instance.primaryFocus?.unfocus();
             },
           ),
@@ -66,26 +120,60 @@ class MainWineList extends StatelessWidget {
     );
   }
 
+  Widget _buildSuggestions(List<String> suggestions) {
+    return Material(
+      elevation: 6,
+      borderRadius: BorderRadius.circular(16),
+      color: Colors.white,
+      child: ListView.builder(
+        padding: const EdgeInsets.symmetric(vertical: 8),
+        shrinkWrap: true,
+        physics: const NeverScrollableScrollPhysics(),
+        itemCount: suggestions.length,
+        itemBuilder: (context, index) {
+          final option = suggestions[index];
+          return InkWell(
+            onTap: () {
+              widget.onSuggestionTap(option);
+              FocusManager.instance.primaryFocus?.unfocus();
+            },
+            borderRadius: BorderRadius.circular(8),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              child: Row(
+                children: [
+                  const Icon(Icons.search_rounded, size: 18, color: AppColors.textSecondary),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(option, style: AppTextStyles.body.copyWith(fontSize: 14)),
+                  ),
+                ],
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+
   Widget _buildCabinetNavigation() {
-    if (selectedCabinet == null) return const SliverToBoxAdapter(child: SizedBox.shrink());
+    if (widget.selectedCabinet == null) {
+      return const SliverToBoxAdapter(child: SizedBox.shrink());
+    }
 
     return SliverPadding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 2),
       sliver: SliverToBoxAdapter(
         child: InkWell(
           borderRadius: BorderRadius.circular(8),
-          onTap: () => onCabinetSelected(null),
+          onTap: () => widget.onCabinetSelected(null),
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
             child: Row(
-              mainAxisSize: MainAxisSize.min, 
-              children: [
-                const Icon(
-                  Icons.arrow_back_ios_new,
-                  size: 18, 
-                  color: AppColors.darkBlue,
-                ),
-                const SizedBox(width: 10),
+              mainAxisSize: MainAxisSize.min,
+              children: const [
+                Icon(Icons.arrow_back_ios_new, size: 18, color: AppColors.darkBlue),
+                SizedBox(width: 10),
               ],
             ),
           ),
@@ -95,14 +183,14 @@ class MainWineList extends StatelessWidget {
   }
 
   Widget _buildCabinetContent() {
-    if (groupedWines.isEmpty) {
+    if (widget.groupedWines.isEmpty) {
       return SliverFillRemaining(
         hasScrollBody: false,
         child: Center(child: Text('No wines found', style: AppTextStyles.body)),
       );
     }
 
-    if (selectedCabinet == null) {
+    if (widget.selectedCabinet == null) {
       return SliverPadding(
         padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
         sliver: SliverGrid(
@@ -112,41 +200,47 @@ class MainWineList extends StatelessWidget {
             mainAxisSpacing: 16,
             childAspectRatio: 1.1,
           ),
-          delegate: SliverChildBuilderDelegate((context, index) {
-            final cabinet = groupedWines.keys.elementAt(index);
-            final count = groupedWines[cabinet]!.values.fold<int>(
-              0,
-              (sum, list) => sum + list.fold(0, (s, w) => s + w.quantity),
-            );
-            return _buildCabinetGridCard(cabinet, count);
-          }, childCount: groupedWines.length),
+          delegate: SliverChildBuilderDelegate(
+            (context, index) {
+              final cabinet = widget.groupedWines.keys.elementAt(index);
+              final count = widget.groupedWines[cabinet]!.values.fold<int>(
+                0,
+                (sum, list) => sum + list.fold(0, (s, w) => s + w.quantity),
+              );
+              return _buildCabinetGridCard(cabinet, count);
+            },
+            childCount: widget.groupedWines.length,
+          ),
         ),
       );
     }
 
-    
-    final cabinetData = groupedWines[selectedCabinet];
+    final cabinetData = widget.groupedWines[widget.selectedCabinet];
     if (cabinetData == null) return const SliverToBoxAdapter(child: SizedBox.shrink());
-    final isUnassigned = selectedCabinet == 'Unassigned';
+    final isUnassigned = widget.selectedCabinet == 'Unassigned';
 
     return SliverList(
-      delegate: SliverChildBuilderDelegate((context, index) {
-        return Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            _buildCabinetHeader(selectedCabinet!),
-            ...cabinetData.entries.map(
-              (s) => _buildShelfSection(s.key, s.value, onWineLongPress, isUnassigned: isUnassigned),
-            ),
-            const SizedBox(height: 20),
-          ],
-        );
-      }, childCount: 1),
+      delegate: SliverChildBuilderDelegate(
+        (context, index) {
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _buildCabinetHeader(widget.selectedCabinet!),
+              ...cabinetData.entries.map(
+                (s) => _buildShelfSection(s.key, s.value,
+                    isUnassigned: isUnassigned),
+              ),
+              const SizedBox(height: 20),
+            ],
+          );
+        },
+        childCount: 1,
+      ),
     );
   }
 
   Widget _buildListView() {
-    if (groupedWines.isEmpty) {
+    if (widget.groupedWines.isEmpty) {
       return SliverFillRemaining(
         hasScrollBody: false,
         child: Center(child: Text('No wines found', style: AppTextStyles.body)),
@@ -154,34 +248,34 @@ class MainWineList extends StatelessWidget {
     }
 
     return SliverList(
-      delegate: SliverChildBuilderDelegate((context, index) {
-        final cabinetEntry = groupedWines.entries.elementAt(index);
-        return Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            _buildCabinetHeader(cabinetEntry.key),
-            ...cabinetEntry.value.entries.map(
-              (s) => _buildShelfSection(s.key, s.value, onWineLongPress),
-            ),
-            const SizedBox(height: 20),
-          ],
-        );
-      }, childCount: groupedWines.length),
+      delegate: SliverChildBuilderDelegate(
+        (context, index) {
+          final cabinetEntry = widget.groupedWines.entries.elementAt(index);
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _buildCabinetHeader(cabinetEntry.key),
+              ...cabinetEntry.value.entries
+                  .map((s) => _buildShelfSection(s.key, s.value)),
+              const SizedBox(height: 20),
+            ],
+          );
+        },
+        childCount: widget.groupedWines.length,
+      ),
     );
   }
 
-  
-
   Widget _buildCabinetGridCard(String cabinet, int totalBottles) {
     return GestureDetector(
-      onTap: () => onCabinetSelected(cabinet),
+      onTap: () => widget.onCabinetSelected(cabinet),
       child: Container(
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(24),
           boxShadow: [
             BoxShadow(
-              color: AppColors.darkBlue.withOpacity(0.05),
+              color: AppColors.darkBlue.withValues(alpha: 0.05),
               blurRadius: 20,
               offset: const Offset(0, 10),
             ),
@@ -192,9 +286,14 @@ class MainWineList extends StatelessWidget {
           children: [
             Container(
               padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(color: AppColors.lightBlue.withOpacity(0.15), shape: BoxShape.circle),
+              decoration: BoxDecoration(
+                color: AppColors.lightBlue.withValues(alpha: 0.15),
+                shape: BoxShape.circle,
+              ),
               child: Icon(
-                cabinet == 'Unassigned' ? Icons.inventory_2_outlined : Icons.kitchen_outlined,
+                cabinet == 'Unassigned'
+                    ? Icons.inventory_2_outlined
+                    : Icons.kitchen_outlined,
                 size: 32,
                 color: AppColors.darkBlue,
               ),
@@ -233,8 +332,7 @@ class MainWineList extends StatelessWidget {
 
   Widget _buildShelfSection(
     String shelfName,
-    List<WineModel> wines,
-    Function(WineModel) onWineLongPress, {
+    List<WineModel> wines, {
     bool isUnassigned = false,
   }) {
     final int totalBottles = wines.fold(0, (sum, w) => sum + w.quantity);
@@ -249,13 +347,15 @@ class MainWineList extends StatelessWidget {
               children: [
                 Text(
                   shelfName,
-                  style: AppTextStyles.h2.copyWith(fontSize: 18, color: AppColors.textSecondary),
+                  style: AppTextStyles.h2
+                      .copyWith(fontSize: 18, color: AppColors.textSecondary),
                 ),
                 const SizedBox(width: 8),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                   decoration: BoxDecoration(
-                    color: AppColors.lightBlue.withOpacity(0.2),
+                    color: AppColors.lightBlue.withValues(alpha: 0.2),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Text(
@@ -271,8 +371,8 @@ class MainWineList extends StatelessWidget {
           ),
         _ShelfView(
           wines: wines,
-          onWineLongPress: onWineLongPress,
-          totalWineCountById: totalWineCountById,
+          onWineLongPress: widget.onWineLongPress,
+          totalWineCountById: widget.totalWineCountById,
           isUnassigned: isUnassigned,
         ),
         const SizedBox(height: 16),
@@ -280,8 +380,6 @@ class MainWineList extends StatelessWidget {
     );
   }
 }
-
-
 
 class _ShelfView extends StatelessWidget {
   final List<WineModel> wines;
@@ -304,16 +402,20 @@ class _ShelfView extends StatelessWidget {
         child: Wrap(
           spacing: 8,
           runSpacing: 20,
-          children: List.generate(wines.length, (index) => SizedBox(
-            width: 100,
-            child: _ShelfBottle(
-              wine: wines[index],
-              index: index,
-              totalWineCount: totalWineCountById[wines[index].id] ?? wines[index].quantity,
-              onLongPress: () => onWineLongPress(wines[index]),
-              showShelf: false,
+          children: List.generate(
+            wines.length,
+            (index) => SizedBox(
+              width: 100,
+              child: _ShelfBottle(
+                wine: wines[index],
+                index: index,
+                totalWineCount:
+                    totalWineCountById[wines[index].id] ?? wines[index].quantity,
+                onLongPress: () => onWineLongPress(wines[index]),
+                showShelf: false,
+              ),
             ),
-          )),
+          ),
         ),
       );
     }
@@ -329,7 +431,8 @@ class _ShelfView extends StatelessWidget {
           child: _ShelfBottle(
             wine: wines[index],
             index: index,
-            totalWineCount: totalWineCountById[wines[index].id] ?? wines[index].quantity,
+            totalWineCount:
+                totalWineCountById[wines[index].id] ?? wines[index].quantity,
             onLongPress: () => onWineLongPress(wines[index]),
           ),
         ),
@@ -355,8 +458,6 @@ class _ShelfBottle extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    
-    
     return GestureDetector(
       onLongPress: onLongPress,
       onTap: () async {
@@ -367,7 +468,6 @@ class _ShelfBottle extends StatelessWidget {
       },
       child: Column(
         children: [
-          
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 8),
             child: Column(
@@ -382,7 +482,7 @@ class _ShelfBottle extends StatelessWidget {
                     decoration: BoxDecoration(
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.black.withOpacity(0.1),
+                          color: Colors.black.withValues(alpha: 0.1),
                           blurRadius: 12,
                           offset: const Offset(0, 8),
                         ),
@@ -392,9 +492,8 @@ class _ShelfBottle extends StatelessWidget {
                         ? Image.network(
                             wine.imageUrl!,
                             fit: BoxFit.contain,
-                            errorBuilder: (context, error, stackTrace) {
-                              return AbstractWineBottle(type: wine.type, size: 90);
-                            },
+                            errorBuilder: (context, error, stackTrace) =>
+                                AbstractWineBottle(type: wine.type, size: 90),
                           )
                         : AbstractWineBottle(type: wine.type, size: 90),
                   ),
@@ -404,7 +503,8 @@ class _ShelfBottle extends StatelessWidget {
                   height: 32,
                   child: Text(
                     wine.name,
-                    style: AppTextStyles.body.copyWith(fontSize: 11, fontWeight: FontWeight.w500),
+                    style: AppTextStyles.body
+                        .copyWith(fontSize: 11, fontWeight: FontWeight.w500),
                     textAlign: TextAlign.center,
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
@@ -415,7 +515,11 @@ class _ShelfBottle extends StatelessWidget {
           ),
           if (showShelf) ...[
             const SizedBox(height: 6),
-            Container(height: 15, decoration: BoxDecoration(color: AppColors.lightBlue.withValues(alpha: 0.1))),
+            Container(
+              height: 15,
+              decoration: BoxDecoration(
+                  color: AppColors.lightBlue.withValues(alpha: 0.1)),
+            ),
           ],
         ],
       ),
@@ -437,7 +541,7 @@ class _ShelfBottle extends StatelessWidget {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
               decoration: BoxDecoration(
-                color: AppColors.lightBlue.withOpacity(0.2),
+                color: AppColors.lightBlue.withValues(alpha: 0.2),
                 borderRadius: BorderRadius.circular(6),
               ),
               child: Text(
@@ -450,10 +554,11 @@ class _ShelfBottle extends StatelessWidget {
               ),
             ),
           if (spotText.isNotEmpty) const SizedBox(width: 4),
-
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-            decoration: BoxDecoration(color: AppColors.lightGreen, borderRadius: BorderRadius.circular(8)),
+            decoration: BoxDecoration(
+                color: AppColors.lightGreen,
+                borderRadius: BorderRadius.circular(8)),
             child: Text(
               'x$totalWineCount',
               style: AppTextStyles.caption.copyWith(

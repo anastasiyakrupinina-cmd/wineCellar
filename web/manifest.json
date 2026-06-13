@@ -1,6 +1,6 @@
 {
-    "name": "home_wine",
-    "short_name": "home_wine",
+    "name": "Wine Cellar",
+    "short_name": "Wine Cellar",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",

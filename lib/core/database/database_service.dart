@@ -1,6 +1,5 @@
 import 'dart:io';
 
-import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:injectable/injectable.dart';
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
@@ -25,8 +24,6 @@ class DatabaseService {
 
   Future<void> init() async {
     if (_db != null) return;
-    if (kIsWeb) return;
-
     if (Platform.isWindows || Platform.isLinux) {
       sqfliteFfiInit();
       databaseFactory = databaseFactoryFfi;
@@ -39,7 +36,7 @@ class DatabaseService {
 
     _db = await openDatabase(
       _dbPath!,
-      version: 6,
+      version: 9,
       onConfigure: (db) async {
         await db.execute('PRAGMA foreign_keys = ON');
       },
@@ -138,9 +135,16 @@ class DatabaseService {
 
     await db.execute('''
       CREATE TABLE archive (
-        wine_id TEXT PRIMARY KEY REFERENCES all_wines(id) ON DELETE CASCADE
+        wine_id     TEXT PRIMARY KEY REFERENCES all_wines(id) ON DELETE CASCADE,
+        archived_at INTEGER NOT NULL DEFAULT 0
       )
     ''');
+
+    await db.execute('CREATE TABLE wineries (name TEXT PRIMARY KEY)');
+    await db.execute('CREATE TABLE wine_types (name TEXT PRIMARY KEY)');
+    await db.execute('CREATE TABLE countries (name TEXT PRIMARY KEY)');
+    await db.execute('CREATE TABLE grapes (name TEXT PRIMARY KEY)');
+    await db.execute('CREATE TABLE shops (name TEXT PRIMARY KEY)');
   }
 
 }

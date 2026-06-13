@@ -1,11 +1,11 @@
 import 'package:auto_route/auto_route.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:home_wine/core/colors/app_colors.dart';
-import 'package:home_wine/core/router/app_router.dart';
-import 'package:home_wine/core/style/app_text_style.dart';
-import 'package:home_wine/feature/main_page/presentation/cubit/main_cubit.dart';
-import 'package:home_wine/feature/main_page/presentation/cubit/main_state.dart';
+import 'package:wine_cellar/core/colors/app_colors.dart';
+import 'package:wine_cellar/core/router/app_router.dart';
+import 'package:wine_cellar/core/style/app_text_style.dart';
+import 'package:wine_cellar/feature/main_page/presentation/cubit/main_cubit.dart';
+import 'package:wine_cellar/feature/main_page/presentation/cubit/main_state.dart';
 
 class MainAppBar extends StatelessWidget implements PreferredSizeWidget {
   final VoidCallback onFilterPressed;

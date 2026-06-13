@@ -1,6 +1,6 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:home_wine/feature/wine/data/models/wine_model.dart';
-import 'package:home_wine/feature/wine/data/repository/wine_repository.dart';
+import 'package:wine_cellar/feature/wine/data/models/wine_model.dart';
+import 'package:wine_cellar/feature/wine/data/repository/wine_repository.dart';
 import 'package:injectable/injectable.dart';
 
 import 'wine_search_state.dart';

@@ -3,23 +3,23 @@ import 'dart:async';
 import 'package:auto_route/auto_route.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:home_wine/core/colors/app_colors.dart';
-import 'package:home_wine/core/dependencies/get_it.dart';
-import 'package:home_wine/core/router/app_router.dart';
-import 'package:home_wine/core/style/app_text_style.dart';
-import 'package:home_wine/core/widget/app_snackbar.dart';
-import 'package:home_wine/core/widget/bottle_wine.dart';
-import 'package:home_wine/core/widget/text_field.dart';
-import 'package:home_wine/feature/main_page/presentation/cubit/main_cubit.dart';
-import 'package:home_wine/feature/main_page/presentation/cubit/main_state.dart';
-import 'package:home_wine/feature/search_page/presentation/page/wine_detail_page.dart';
-import 'package:home_wine/feature/wine/data/models/wine_bottle.dart';
-import 'package:home_wine/feature/wine/data/models/wine_model.dart';
-import 'package:home_wine/feature/wine/data/repository/wine_repository.dart';
-import 'package:home_wine/feature/wine/presentation/cubit/wine_search_cubit.dart';
-import 'package:home_wine/feature/wine/presentation/cubit/wine_search_state.dart';
-import 'package:home_wine/feature/wishlist_page/presentation/cubit/wishlist_cubit.dart';
-import 'package:home_wine/feature/wishlist_page/presentation/cubit/wishlist_state.dart';
+import 'package:wine_cellar/core/colors/app_colors.dart';
+import 'package:wine_cellar/core/dependencies/get_it.dart';
+import 'package:wine_cellar/core/router/app_router.dart';
+import 'package:wine_cellar/core/style/app_text_style.dart';
+import 'package:wine_cellar/core/widget/app_snackbar.dart';
+import 'package:wine_cellar/core/widget/bottle_wine.dart';
+import 'package:wine_cellar/core/widget/text_field.dart';
+import 'package:wine_cellar/feature/main_page/presentation/cubit/main_cubit.dart';
+import 'package:wine_cellar/feature/main_page/presentation/cubit/main_state.dart';
+import 'package:wine_cellar/feature/search_page/presentation/page/wine_detail_page.dart';
+import 'package:wine_cellar/feature/wine/data/models/wine_bottle.dart';
+import 'package:wine_cellar/feature/wine/data/models/wine_model.dart';
+import 'package:wine_cellar/feature/wine/data/repository/wine_repository.dart';
+import 'package:wine_cellar/feature/wine/presentation/cubit/wine_search_cubit.dart';
+import 'package:wine_cellar/feature/wine/presentation/cubit/wine_search_state.dart';
+import 'package:wine_cellar/feature/wishlist_page/presentation/cubit/wishlist_cubit.dart';
+import 'package:wine_cellar/feature/wishlist_page/presentation/cubit/wishlist_state.dart';
 
 @RoutePage()
 class SearchPage extends StatefulWidget {
@@ -97,7 +97,7 @@ class _SearchPageState extends State<SearchPage> {
                   child: Container(
                     constraints: const BoxConstraints(maxWidth: 800),
                     child: AppTextField(
-                      hint: 'Name, variety, region, or year...',
+                      hint: 'Name, winery, region, country, type',
                       controller: _searchController,
                       prefixIcon: Icons.search,
                       suffixIcon: _searchController.text.isNotEmpty ? Icons.close_rounded : null,
@@ -189,7 +189,7 @@ class _SearchWineCard extends StatelessWidget {
           borderRadius: BorderRadius.circular(24),
           boxShadow: [
             BoxShadow(
-              color: AppColors.darkBlue.withOpacity(0.05),
+              color: AppColors.darkBlue.withValues(alpha: 0.05),
               blurRadius: 20,
               offset: const Offset(0, 10),
             ),
@@ -205,7 +205,7 @@ class _SearchWineCard extends StatelessWidget {
                   ClipRRect(
                     borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
                     child: Container(
-                      color: AppColors.lightBlue.withOpacity(0.2),
+                      color: AppColors.lightBlue.withValues(alpha: 0.2),
                       child: wine.imageUrl != null && wine.imageUrl!.isNotEmpty
                           ? Image.network(
                               wine.imageUrl!,
@@ -255,11 +255,11 @@ class _SearchWineCard extends StatelessWidget {
                           child: Container(
                             padding: const EdgeInsets.all(6),
                             decoration: BoxDecoration(
-                              color: Colors.white.withOpacity(0.9),
+                              color: Colors.white.withValues(alpha: 0.9),
                               shape: BoxShape.circle,
                               boxShadow: [
                                 BoxShadow(
-                                  color: Colors.black.withOpacity(0.08),
+                                  color: Colors.black.withValues(alpha: 0.08),
                                   blurRadius: 4,
                                 ),
                               ],
@@ -317,7 +317,7 @@ class _SearchWineCard extends StatelessWidget {
                       if (quantity > 0 && cellarWine != null) {
                         return Container(
                           decoration: BoxDecoration(
-                            color: AppColors.lightBlue.withOpacity(0.1),
+                            color: AppColors.lightBlue.withValues(alpha: 0.1),
                             borderRadius: BorderRadius.circular(12),
                           ),
                           child: Row(
@@ -439,7 +439,7 @@ class _SearchWineCard extends StatelessWidget {
                         child: Container(
                           padding: const EdgeInsets.all(6),
                           decoration: BoxDecoration(
-                            color: AppColors.lightBlue.withOpacity(0.2),
+                            color: AppColors.lightBlue.withValues(alpha: 0.2),
                             borderRadius: BorderRadius.circular(12),
                           ),
                           child: const Icon(Icons.add, color: AppColors.darkBlue, size: 20),

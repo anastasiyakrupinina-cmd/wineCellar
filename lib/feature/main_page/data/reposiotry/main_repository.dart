@@ -1,10 +1,10 @@
 import 'dart:convert';
 
-import 'package:home_wine/core/database/database_service.dart';
-import 'package:home_wine/core/sync/ucloud_sync_service.dart';
-import 'package:home_wine/feature/wine/data/models/purchase_record.dart';
-import 'package:home_wine/feature/wine/data/models/wine_bottle.dart';
-import 'package:home_wine/feature/wine/data/models/wine_model.dart';
+import 'package:wine_cellar/core/database/database_service.dart';
+import 'package:wine_cellar/core/sync/ucloud_sync_service.dart';
+import 'package:wine_cellar/feature/wine/data/models/purchase_record.dart';
+import 'package:wine_cellar/feature/wine/data/models/wine_bottle.dart';
+import 'package:wine_cellar/feature/wine/data/models/wine_model.dart';
 import 'package:injectable/injectable.dart';
 import 'package:sqflite/sqflite.dart';
 
@@ -88,6 +88,26 @@ class MainRepositoryImpl implements MainRepository {
     };
     await db.insert('all_wines', map, conflictAlgorithm: ConflictAlgorithm.ignore);
     await db.update('all_wines', map, where: 'id = ?', whereArgs: [wine.id]);
+    await _populateLookupTables(db, wine);
+  }
+
+  Future<void> _populateLookupTables(DatabaseExecutor db, WineModel wine) async {
+    if (wine.winery != null && wine.winery!.isNotEmpty) {
+      await db.insert('wineries', {'name': wine.winery}, conflictAlgorithm: ConflictAlgorithm.ignore);
+    }
+    if (wine.type != null && wine.type!.isNotEmpty) {
+      await db.insert('wine_types', {'name': wine.type}, conflictAlgorithm: ConflictAlgorithm.ignore);
+    }
+    if (wine.country != null && wine.country!.isNotEmpty) {
+      await db.insert('countries', {'name': wine.country}, conflictAlgorithm: ConflictAlgorithm.ignore);
+    }
+    if (wine.grapes != null) {
+      for (final grape in wine.grapes!) {
+        if (grape.isNotEmpty) {
+          await db.insert('grapes', {'name': grape}, conflictAlgorithm: ConflictAlgorithm.ignore);
+        }
+      }
+    }
   }
 
   @override
@@ -102,7 +122,7 @@ class MainRepositoryImpl implements MainRepository {
       ORDER  BY aw.name ASC
     ''');
 
-    // Load all bottle size entries grouped by wine_id
+    // Load all bottle sizes grouped by wine_id
     final bottleRows = await db.query('wine_bottles');
     final bottlesByWineId = <String, List<WineBottle>>{};
     for (final row in bottleRows) {
@@ -123,7 +143,7 @@ class MainRepositoryImpl implements MainRepository {
       ORDER  BY c.name, s.name, p.position_index
     ''');
 
-    // Group indexes by wine → cabinet+shelf key, preserving ORDER BY order.
+    // Group indexes by wine → cabinet+shelf key, ORDER BY order.
     final grouped = <String, Map<String, List<int>>>{};
     for (final row in posRows) {
       final wineId = row['wine_id'] as String;
@@ -163,22 +183,14 @@ class MainRepositoryImpl implements MainRepository {
     _assertInitialized();
     final db = _databaseService.db;
 
-    // Clear positions (needed even if wine stays in all_wines due to wishlist)
-    await db.rawUpdate(
-      'UPDATE positions SET wine_id = NULL WHERE wine_id = ?', [wineId],
+    await db.insert(
+      'archive',
+      {'wine_id': wineId, 'archived_at': DateTime.now().millisecondsSinceEpoch},
+      conflictAlgorithm: ConflictAlgorithm.replace,
     );
 
-    // Remove from cellar — cascades wine_bottles
+    await db.rawUpdate('UPDATE positions SET wine_id = NULL WHERE wine_id = ?', [wineId]);
     await db.delete('cellar_wines', where: 'wine_id = ?', whereArgs: [wineId]);
-
-    // Only remove from all_wines if not in wishlist
-    final inWishlist = await db.query(
-      'wishlist', columns: ['wine_id'],
-      where: 'wine_id = ?', whereArgs: [wineId], limit: 1,
-    );
-    if (inWishlist.isEmpty) {
-      await db.delete('all_wines', where: 'id = ?', whereArgs: [wineId]);
-    }
 
     _syncService.syncOnClose();
   }
@@ -203,6 +215,13 @@ class MainRepositoryImpl implements MainRepository {
       record.toMap(),
       conflictAlgorithm: ConflictAlgorithm.replace,
     );
+    if (record.shopName != null && record.shopName!.isNotEmpty) {
+      await _databaseService.db.insert(
+        'shops',
+        {'name': record.shopName},
+        conflictAlgorithm: ConflictAlgorithm.ignore,
+      );
+    }
     _syncService.syncOnClose();
   }
 

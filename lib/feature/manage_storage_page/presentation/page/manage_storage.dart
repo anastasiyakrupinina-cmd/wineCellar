@@ -1,15 +1,15 @@
 import 'package:auto_route/auto_route.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:home_wine/core/colors/app_colors.dart';
-import 'package:home_wine/core/dependencies/get_it.dart';
-import 'package:home_wine/core/style/app_text_style.dart';
-import 'package:home_wine/core/widget/app_snackbar.dart';
-import 'package:home_wine/core/widget/button.dart';
-import 'package:home_wine/core/widget/text_field.dart';
-import 'package:home_wine/feature/manage_storage_page/presentation/page/manage_storage_cubit.dart';
-import 'package:home_wine/feature/manage_storage_page/presentation/page/manage_storage_state.dart';
-import 'package:home_wine/feature/profile_page/data/repository/storage_model.dart';
+import 'package:wine_cellar/core/colors/app_colors.dart';
+import 'package:wine_cellar/core/dependencies/get_it.dart';
+import 'package:wine_cellar/core/style/app_text_style.dart';
+import 'package:wine_cellar/core/widget/app_snackbar.dart';
+import 'package:wine_cellar/core/widget/button.dart';
+import 'package:wine_cellar/core/widget/text_field.dart';
+import 'package:wine_cellar/feature/manage_storage_page/presentation/page/manage_storage_cubit.dart';
+import 'package:wine_cellar/feature/manage_storage_page/presentation/page/manage_storage_state.dart';
+import 'package:wine_cellar/feature/profile_page/data/repository/storage_model.dart';
 
 @RoutePage()
 class ManageStoragePage extends StatelessWidget {

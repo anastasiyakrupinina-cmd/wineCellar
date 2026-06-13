@@ -1,7 +1,7 @@
 import 'dart:developer';
 
 import 'package:dio/dio.dart';
-import 'package:home_wine/feature/wine/data/models/wine_model.dart';
+import 'package:wine_cellar/feature/wine/data/models/wine_model.dart';
 import 'package:injectable/injectable.dart';
 
 abstract class WineRepository {

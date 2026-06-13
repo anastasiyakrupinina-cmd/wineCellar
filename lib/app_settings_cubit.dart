@@ -1,5 +1,5 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:home_wine/core/storage/storage_service.dart';
+import 'package:wine_cellar/core/storage/storage_service.dart';
 
 class AppSettingsState {
   final bool showCabinetView;

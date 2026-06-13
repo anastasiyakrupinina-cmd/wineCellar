@@ -2,8 +2,8 @@ import 'dart:ui';
 
 import 'package:auto_route/auto_route.dart';
 import 'package:flutter/material.dart';
-import 'package:home_wine/core/colors/app_colors.dart';
-import 'package:home_wine/core/router/app_router.dart';
+import 'package:wine_cellar/core/colors/app_colors.dart';
+import 'package:wine_cellar/core/router/app_router.dart';
 
 @RoutePage()
 class DashboardPage extends StatelessWidget {
@@ -14,7 +14,7 @@ class DashboardPage extends StatelessWidget {
     final bool isDesktop = MediaQuery.of(context).size.width > 900;
 
     return AutoTabsRouter(
-      routes: const [MainRoute(), SearchRoute(), WishlistRoute(), ProfileRoute()],
+      routes: const [MainRoute(), SearchRoute(), WishlistRoute(), ArchiveRoute(), ProfileRoute()],
       builder: (context, child) {
         final tabsRouter = AutoTabsRouter.of(context);
 
@@ -70,10 +70,17 @@ class DashboardPage extends StatelessWidget {
           ),
           const SizedBox(height: 32),
           _buildRailItem(
-            icon: Icons.person_outline,
-            activeIcon: Icons.person,
+            icon: Icons.inventory_2_outlined,
+            activeIcon: Icons.inventory_2,
             isActive: tabsRouter.activeIndex == 3,
             onTap: () => tabsRouter.setActiveIndex(3),
+          ),
+          const SizedBox(height: 32),
+          _buildRailItem(
+            icon: Icons.person_outline,
+            activeIcon: Icons.person,
+            isActive: tabsRouter.activeIndex == 4,
+            onTap: () => tabsRouter.setActiveIndex(4),
           ),
 
           const Spacer(),
@@ -149,10 +156,16 @@ class DashboardPage extends StatelessWidget {
                   onTap: () => tabsRouter.setActiveIndex(2),
                 ),
                 _buildTabItem(
-                  icon: Icons.person_outline,
-                  activeIcon: Icons.person,
+                  icon: Icons.inventory_2_outlined,
+                  activeIcon: Icons.inventory_2,
                   isActive: tabsRouter.activeIndex == 3,
                   onTap: () => tabsRouter.setActiveIndex(3),
+                ),
+                _buildTabItem(
+                  icon: Icons.person_outline,
+                  activeIcon: Icons.person,
+                  isActive: tabsRouter.activeIndex == 4,
+                  onTap: () => tabsRouter.setActiveIndex(4),
                 ),
               ],
             ),

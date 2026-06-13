@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:home_wine/core/colors/app_colors.dart';
-import 'package:home_wine/core/style/app_text_style.dart';
+import 'package:wine_cellar/core/colors/app_colors.dart';
+import 'package:wine_cellar/core/style/app_text_style.dart';
 
 class AppTheme {
   static ThemeData get lightTheme {

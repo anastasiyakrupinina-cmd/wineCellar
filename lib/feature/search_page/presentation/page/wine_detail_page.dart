@@ -1,30 +1,32 @@
 import 'package:auto_route/auto_route.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:home_wine/core/colors/app_colors.dart';
-import 'package:home_wine/core/dependencies/get_it.dart';
-import 'package:home_wine/core/router/app_router.dart';
-import 'package:home_wine/core/style/app_text_style.dart';
-import 'package:home_wine/core/widget/app_snackbar.dart';
-import 'package:home_wine/core/widget/bottle_wine.dart';
-import 'package:home_wine/core/widget/button.dart';
-import 'package:home_wine/feature/main_page/data/reposiotry/main_repository.dart';
-import 'package:home_wine/feature/main_page/presentation/cubit/main_cubit.dart';
-import 'package:home_wine/feature/main_page/presentation/cubit/main_state.dart';
-import 'package:home_wine/feature/profile_page/data/repository/profile_repository.dart';
-import 'package:home_wine/feature/profile_page/data/repository/storage_model.dart';
-import 'package:home_wine/feature/wine/data/models/purchase_record.dart';
-import 'package:home_wine/feature/wine/data/models/wine_bottle.dart';
-import 'package:home_wine/feature/wine/data/models/wine_model.dart';
-import 'package:home_wine/feature/wine/data/repository/wine_repository.dart';
-import 'package:home_wine/feature/wishlist_page/presentation/cubit/wishlist_cubit.dart';
-import 'package:home_wine/feature/wishlist_page/presentation/cubit/wishlist_state.dart';
+import 'package:wine_cellar/core/colors/app_colors.dart';
+import 'package:wine_cellar/core/dependencies/get_it.dart';
+import 'package:wine_cellar/core/router/app_router.dart';
+import 'package:wine_cellar/core/style/app_text_style.dart';
+import 'package:wine_cellar/core/widget/app_snackbar.dart';
+import 'package:wine_cellar/core/widget/bottle_wine.dart';
+import 'package:wine_cellar/core/widget/button.dart';
+import 'package:wine_cellar/feature/main_page/data/reposiotry/main_repository.dart';
+import 'package:wine_cellar/feature/main_page/presentation/cubit/main_cubit.dart';
+import 'package:wine_cellar/feature/main_page/presentation/cubit/main_state.dart';
+import 'package:wine_cellar/feature/profile_page/data/repository/profile_repository.dart';
+import 'package:wine_cellar/feature/profile_page/data/repository/storage_model.dart';
+import 'package:wine_cellar/feature/wine/data/models/purchase_record.dart';
+import 'package:wine_cellar/feature/wine/data/models/wine_bottle.dart';
+import 'package:wine_cellar/feature/wine/data/models/wine_model.dart';
+import 'package:wine_cellar/feature/wine/data/repository/wine_repository.dart';
+import 'package:wine_cellar/feature/wishlist_page/presentation/cubit/wishlist_cubit.dart';
+import 'package:wine_cellar/feature/wine/data/repository/search_repository.dart';
+import 'package:wine_cellar/feature/wishlist_page/presentation/cubit/wishlist_state.dart';
 
 @RoutePage()
 class WineDetailPage extends StatefulWidget {
   final WineModel? wine;
+  final bool readOnly;
 
-  const WineDetailPage({super.key, this.wine});
+  const WineDetailPage({super.key, this.wine, this.readOnly = false});
 
   @override
   State<WineDetailPage> createState() => _WineDetailPageState();
@@ -44,6 +46,8 @@ class _WineDetailPageState extends State<WineDetailPage> {
 
   Future<WineModel> _resolveWineDetails() async {
     if (widget.wine == null) throw Exception('No wine provided');
+
+    if (widget.readOnly) return widget.wine!;
 
     final savedWines = await getIt<MainRepository>().getLocalWines();
     final cellarWine = savedWines.where((w) => w.id == widget.wine!.id).firstOrNull;
@@ -146,8 +150,8 @@ class _WineDetailPageState extends State<WineDetailPage> {
               children: [
                 _buildMainInfo(wine),
                 const SizedBox(height: 32),
-                _buildCellarControls(wine),
-                const SizedBox(height: 48),
+                if (!widget.readOnly) _buildCellarControls(wine),
+                SizedBox(height: widget.readOnly ? 0 : 48),
                 _buildDetailedContent(wine, isLoading),
               ],
             ),
@@ -195,32 +199,33 @@ class _WineDetailPageState extends State<WineDetailPage> {
             ],
           ),
         ),
-        BlocBuilder<MainCubit, MainState>(
-          builder: (context, state) {
-            if (state is MainLoading || state is MainInitial) {
-              return const SizedBox(
-                height: 68,
-                child: Center(
-                  child: SizedBox(
-                    height: 20,
-                    width: 20,
-                    child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.darkBlue),
+        if (!widget.readOnly)
+          BlocBuilder<MainCubit, MainState>(
+            builder: (context, state) {
+              if (state is MainLoading || state is MainInitial) {
+                return const SizedBox(
+                  height: 68,
+                  child: Center(
+                    child: SizedBox(
+                      height: 20,
+                      width: 20,
+                      child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.darkBlue),
+                    ),
                   ),
+                );
+              }
+              if (state is MainLoaded && state.wines.any((w) => w.id == wine.id)) {
+                return const SizedBox.shrink();
+              }
+              return SafeArea(
+                top: false,
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+                  child: _buildAddToCellarButton(context, wine),
                 ),
               );
-            }
-            if (state is MainLoaded && state.wines.any((w) => w.id == wine.id)) {
-              return const SizedBox.shrink();
-            }
-            return SafeArea(
-              top: false,
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-                child: _buildAddToCellarButton(context, wine),
-              ),
-            );
-          },
-        ),
+            },
+          ),
       ],
     );
   }
@@ -1011,9 +1016,6 @@ class _WineDetailPageState extends State<WineDetailPage> {
   }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Bottle size + quantity picker (used before "Add to Cellar" and from catalog)
-// ─────────────────────────────────────────────────────────────────────────────
 
 class BottleSizeQuantityPickerDialog extends StatefulWidget {
   const BottleSizeQuantityPickerDialog({super.key});
@@ -1132,9 +1134,6 @@ class _BottleSizeQuantityPickerDialogState extends State<BottleSizeQuantityPicke
   }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Add quantity dialog (used on "+" next to an existing bottle size)
-// ─────────────────────────────────────────────────────────────────────────────
 
 class _AddQuantityDialog extends StatefulWidget {
   const _AddQuantityDialog();
@@ -1182,9 +1181,7 @@ class _AddQuantityDialogState extends State<_AddQuantityDialog> {
   }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Add size dialog (for existing cellar wine)
-// ─────────────────────────────────────────────────────────────────────────────
+
 
 class _AddSizeDialog extends StatefulWidget {
   final Set<String> existingSizes;
@@ -1318,9 +1315,7 @@ class _AddSizeDialogState extends State<_AddSizeDialog> {
   }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Log purchase dialog
-// ─────────────────────────────────────────────────────────────────────────────
+
 
 class _LogPurchaseDialog extends StatefulWidget {
   final String wineId;
@@ -1337,6 +1332,9 @@ class _LogPurchaseDialogState extends State<_LogPurchaseDialog> {
   final _currencyController = TextEditingController(text: '€');
   final _shopNameController = TextEditingController();
   final _customSizeController = TextEditingController();
+  final _shopFocusNode = FocusNode();
+  List<String> _shopOptions = [];
+  List<String> _shopSuggestions = [];
   int _quantity = 1;
   DateTime _date = DateTime.now();
   String? _selectedSize;
@@ -1348,6 +1346,30 @@ class _LogPurchaseDialogState extends State<_LogPurchaseDialog> {
     if (widget.existingSizes.isNotEmpty) {
       _selectedSize = widget.existingSizes.first;
     }
+    getIt<SearchRepository>().getShopOptions().then((opts) {
+      if (mounted) setState(() => _shopOptions = opts);
+    });
+    _shopFocusNode.addListener(_onShopFocusChanged);
+    _shopNameController.addListener(_onShopTextChanged);
+  }
+
+  void _onShopFocusChanged() {
+    if (!_shopFocusNode.hasFocus) setState(() => _shopSuggestions = []);
+  }
+
+  void _onShopTextChanged() {
+    if (!_shopFocusNode.hasFocus) return;
+    final q = _shopNameController.text.toLowerCase().trim();
+    if (q.isEmpty) {
+      setState(() => _shopSuggestions = []);
+      return;
+    }
+    setState(() {
+      _shopSuggestions = _shopOptions
+          .where((o) => o.toLowerCase().contains(q) && o.toLowerCase() != q)
+          .take(6)
+          .toList();
+    });
   }
 
   @override
@@ -1356,6 +1378,9 @@ class _LogPurchaseDialogState extends State<_LogPurchaseDialog> {
     _currencyController.dispose();
     _shopNameController.dispose();
     _customSizeController.dispose();
+    _shopFocusNode.removeListener(_onShopFocusChanged);
+    _shopNameController.removeListener(_onShopTextChanged);
+    _shopFocusNode.dispose();
     super.dispose();
   }
 
@@ -1508,7 +1533,7 @@ class _LogPurchaseDialogState extends State<_LogPurchaseDialog> {
             ],
             const SizedBox(height: 16),
 
-            _field('Store', _shopNameController, 'e.g. Wine Spectator Shop'),
+            _shopField(),
             const SizedBox(height: 28),
 
             Row(
@@ -1550,6 +1575,68 @@ class _LogPurchaseDialogState extends State<_LogPurchaseDialog> {
           ],
         ),
       ),
+    );
+  }
+
+  Widget _shopField() {
+    final greyBorder = OutlineInputBorder(
+      borderRadius: BorderRadius.circular(12),
+      borderSide: BorderSide(color: Colors.grey.shade300),
+    );
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Text('Store', style: AppTextStyles.caption.copyWith(fontWeight: FontWeight.bold)),
+        const SizedBox(height: 8),
+        TextField(
+          controller: _shopNameController,
+          focusNode: _shopFocusNode,
+          decoration: InputDecoration(
+            hintText: 'e.g. Wine Spectator Shop',
+            hintStyle: TextStyle(color: AppColors.textSecondary.withValues(alpha: 0.4)),
+            border: greyBorder,
+            enabledBorder: greyBorder,
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: const BorderSide(color: AppColors.lightBlue, width: 2),
+            ),
+            contentPadding: const EdgeInsets.all(12),
+          ),
+        ),
+        if (_shopSuggestions.isNotEmpty)
+          Material(
+            elevation: 4,
+            borderRadius: const BorderRadius.vertical(bottom: Radius.circular(12)),
+            color: Colors.white,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: _shopSuggestions
+                  .map((option) => InkWell(
+                        onTap: () {
+                          _shopNameController.text = option;
+                          _shopNameController.selection = TextSelection.fromPosition(
+                            TextPosition(offset: option.length),
+                          );
+                          _shopFocusNode.unfocus();
+                        },
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                          child: Row(
+                            children: [
+                              const Icon(Icons.store_outlined, size: 16, color: AppColors.textSecondary),
+                              const SizedBox(width: 10),
+                              Expanded(
+                                child: Text(option, style: AppTextStyles.body.copyWith(fontSize: 14)),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ))
+                  .toList(),
+            ),
+          ),
+      ],
     );
   }
 
@@ -1600,9 +1687,7 @@ class _LogPurchaseDialogState extends State<_LogPurchaseDialog> {
   }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Edit wine dialog (unchanged from original)
-// ─────────────────────────────────────────────────────────────────────────────
+
 
 class EditWineDialog extends StatefulWidget {
   final WineModel wine;
@@ -1843,9 +1928,7 @@ class _EditWineDialogState extends State<EditWineDialog> {
   }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Price tile (unchanged)
-// ─────────────────────────────────────────────────────────────────────────────
+
 
 class _PriceTile extends StatelessWidget {
   final WinePrice price;
@@ -1926,9 +2009,7 @@ class _ScoreTile extends StatelessWidget {
   }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Storage location dialog (unchanged)
-// ─────────────────────────────────────────────────────────────────────────────
+
 
 class StorageLocationDialog extends StatefulWidget {
   final WineModel wine;

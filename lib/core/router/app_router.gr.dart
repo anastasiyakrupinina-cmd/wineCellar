@@ -11,6 +11,22 @@
 part of 'app_router.dart';
 
 /// generated route for
+/// [ArchivePage]
+class ArchiveRoute extends PageRouteInfo<void> {
+  const ArchiveRoute({List<PageRouteInfo>? children})
+    : super(ArchiveRoute.name, initialChildren: children);
+
+  static const String name = 'ArchiveRoute';
+
+  static PageInfo page = PageInfo(
+    name,
+    builder: (data) {
+      return const ArchivePage();
+    },
+  );
+}
+
+/// generated route for
 /// [DashboardPage]
 class DashboardRoute extends PageRouteInfo<void> {
   const DashboardRoute({List<PageRouteInfo>? children})
@@ -107,22 +123,6 @@ class SearchRoute extends PageRouteInfo<void> {
 }
 
 /// generated route for
-/// [SettingsPage]
-class SettingsRoute extends PageRouteInfo<void> {
-  const SettingsRoute({List<PageRouteInfo>? children})
-    : super(SettingsRoute.name, initialChildren: children);
-
-  static const String name = 'SettingsRoute';
-
-  static PageInfo page = PageInfo(
-    name,
-    builder: (data) {
-      return const SettingsPage();
-    },
-  );
-}
-
-/// generated route for
 /// [SplashPage]
 class SplashRoute extends PageRouteInfo<void> {
   const SplashRoute({List<PageRouteInfo>? children})
@@ -157,10 +157,10 @@ class WishlistRoute extends PageRouteInfo<void> {
 /// generated route for
 /// [WineDetailPage]
 class WineDetailRoute extends PageRouteInfo<WineDetailRouteArgs> {
-  WineDetailRoute({Key? key, WineModel? wine, List<PageRouteInfo>? children})
+  WineDetailRoute({Key? key, WineModel? wine, bool readOnly = false, List<PageRouteInfo>? children})
     : super(
         WineDetailRoute.name,
-        args: WineDetailRouteArgs(key: key, wine: wine),
+        args: WineDetailRouteArgs(key: key, wine: wine, readOnly: readOnly),
         initialChildren: children,
       );
 
@@ -172,30 +172,32 @@ class WineDetailRoute extends PageRouteInfo<WineDetailRouteArgs> {
       final args = data.argsAs<WineDetailRouteArgs>(
         orElse: () => const WineDetailRouteArgs(),
       );
-      return WineDetailPage(key: args.key, wine: args.wine);
+      return WineDetailPage(key: args.key, wine: args.wine, readOnly: args.readOnly);
     },
   );
 }
 
 class WineDetailRouteArgs {
-  const WineDetailRouteArgs({this.key, this.wine});
+  const WineDetailRouteArgs({this.key, this.wine, this.readOnly = false});
 
   final Key? key;
 
   final WineModel? wine;
 
+  final bool readOnly;
+
   @override
   String toString() {
-    return 'WineDetailRouteArgs{key: $key, wine: $wine}';
+    return 'WineDetailRouteArgs{key: $key, wine: $wine, readOnly: $readOnly}';
   }
 
   @override
   bool operator ==(Object other) {
     if (identical(this, other)) return true;
     if (other is! WineDetailRouteArgs) return false;
-    return key == other.key && wine == other.wine;
+    return key == other.key && wine == other.wine && readOnly == other.readOnly;
   }
 
   @override
-  int get hashCode => key.hashCode ^ wine.hashCode;
+  int get hashCode => key.hashCode ^ wine.hashCode ^ readOnly.hashCode;
 }

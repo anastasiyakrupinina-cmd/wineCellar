@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:home_wine/core/colors/app_colors.dart';
+import 'package:wine_cellar/core/colors/app_colors.dart';
 
 class AppButton extends StatelessWidget {
   final String text;
