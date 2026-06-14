@@ -134,7 +134,7 @@ class _LoginPageState extends State<LoginPage> with SingleTickerProviderStateMix
                                     const SizedBox(height: 20),
                                     Text(
                                       'Use your university email and an app password from uCloud.\n'
-                                      'Generate it at ucloud.univie.ac.at → Settings → Security → App passwords.',
+                                      'Generate it at ucloud.univie.ac.at → Settings → Security → Devices & Sessions.',
                                       textAlign: TextAlign.center,
                                       style: AppTextStyles.body.copyWith(
                                         color: AppColors.textSecondary,

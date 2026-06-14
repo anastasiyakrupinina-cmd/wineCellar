@@ -15,6 +15,9 @@ abstract class ProfileRepository {
 
   /// Frees the [count] highest-indexed spots occupied by [wineId].
   Future<void> freeSpots(String wineId, int count);
+
+  /// Returns all positions currently occupied by [wineId], with human-readable labels.
+  Future<List<OccupiedSpot>> getOccupiedSpots(String wineId);
 }
 
 @Injectable(as: ProfileRepository)
@@ -57,6 +60,7 @@ class ProfileRepositoryImpl implements ProfileRepository {
             'shelf_id':       shelf.id,
             'position_index': pos.index,
             'wine_id':        pos.wineId,
+            'bottle_size':    pos.bottleSize,
           });
         }
       }
@@ -76,7 +80,8 @@ class ProfileRepositoryImpl implements ProfileRepository {
              s.name AS shelf_name,
              p.id   AS pos_id,
              p.position_index,
-             p.wine_id
+             p.wine_id,
+             p.bottle_size
       FROM   cabinets c
       LEFT JOIN shelves   s ON s.cabinet_id = c.id
       LEFT JOIN positions p ON p.shelf_id   = s.id
@@ -105,9 +110,10 @@ class ProfileRepositoryImpl implements ProfileRepository {
       if (row['pos_id'] == null) continue;
 
       shelfPositions[shelfId]!.add(BottlePositionModel(
-        id:     row['pos_id'] as String,
-        index:  row['position_index'] as int,
-        wineId: row['wine_id'] as String?,
+        id:         row['pos_id'] as String,
+        index:      row['position_index'] as int,
+        wineId:     row['wine_id'] as String?,
+        bottleSize: row['bottle_size'] as String?,
       ));
     }
 
@@ -170,4 +176,27 @@ class ProfileRepositoryImpl implements ProfileRepository {
       ids,
     );
   }
+
+  @override
+  Future<List<OccupiedSpot>> getOccupiedSpots(String wineId) async {
+    _assertInitialized();
+    final rows = await _databaseService.db.rawQuery('''
+      SELECT p.id AS position_id,
+             c.name AS cabinet_name,
+             s.name AS shelf_name,
+             p.position_index,
+             p.bottle_size
+      FROM   positions p
+      JOIN   shelves s   ON p.shelf_id   = s.id
+      JOIN   cabinets c  ON s.cabinet_id = c.id
+      WHERE  p.wine_id = ?
+      ORDER  BY c.name, s.name, p.position_index
+    ''', [wineId]);
+    return rows.map((row) => OccupiedSpot(
+      positionId: row['position_id'] as String,
+      label: '${row['cabinet_name']} > ${row['shelf_name']} > Spot ${row['position_index']}',
+      bottleSize: row['bottle_size'] as String?,
+    )).toList();
+  }
+
 }

@@ -1,6 +1,7 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:wine_cellar/feature/main_page/data/reposiotry/main_repository.dart';
 import 'package:wine_cellar/feature/profile_page/data/repository/profile_repository.dart';
+import 'package:wine_cellar/feature/profile_page/data/repository/storage_model.dart';
 import 'package:wine_cellar/feature/wine/data/models/wine_bottle.dart';
 import 'package:wine_cellar/feature/wine/data/models/wine_model.dart';
 import 'package:injectable/injectable.dart';
@@ -106,7 +107,11 @@ class MainCubit extends Cubit<MainState> {
     }
   }
 
-  Future<void> updateBottleSizes(WineModel wine, List<WineBottle> newBottles) async {
+  Future<void> updateBottleSizes(
+    WineModel wine,
+    List<WineBottle> newBottles, {
+    bool skipPositionUpdate = false,
+  }) async {
     try {
       final newTotal = newBottles.fold(0, (s, b) => s + b.quantity);
 
@@ -116,7 +121,7 @@ class MainCubit extends Cubit<MainState> {
       }
 
       final oldTotal = wine.quantity;
-      if (newTotal < oldTotal) {
+      if (!skipPositionUpdate && newTotal < oldTotal) {
         await _profileRepository.freeSpots(wine.id, oldTotal - newTotal);
       }
 
@@ -135,4 +140,7 @@ class MainCubit extends Cubit<MainState> {
       if (!isClosed) emit(MainError(e.toString()));
     }
   }
+
+  Future<List<OccupiedSpot>> getOccupiedSpots(String wineId) =>
+      _profileRepository.getOccupiedSpots(wineId);
 }

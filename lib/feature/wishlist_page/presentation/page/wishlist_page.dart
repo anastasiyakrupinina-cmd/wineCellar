@@ -297,7 +297,7 @@ class _AddToCellarButton extends StatelessWidget {
 
     final res = await showDialog<Map<String, dynamic>>(
       context: context,
-      builder: (ctx) => StorageLocationDialog(wine: wineDetails.copyWith(quantity: picked.quantity)),
+      builder: (ctx) => StorageLocationDialog(wine: wineDetails.copyWith(quantity: picked.quantity), bottleSize: picked.bottleSize),
     );
     if (res == null || !context.mounted) return;
 

@@ -36,7 +36,7 @@ class DatabaseService {
 
     _db = await openDatabase(
       _dbPath!,
-      version: 9,
+      version: 10,
       onConfigure: (db) async {
         await db.execute('PRAGMA foreign_keys = ON');
       },
@@ -91,7 +91,8 @@ class DatabaseService {
         id             TEXT PRIMARY KEY,
         shelf_id       TEXT NOT NULL REFERENCES shelves(id) ON DELETE CASCADE,
         position_index INTEGER NOT NULL,
-        wine_id        TEXT REFERENCES cellar_wines(wine_id) ON DELETE SET NULL
+        wine_id        TEXT REFERENCES cellar_wines(wine_id) ON DELETE SET NULL,
+        bottle_size    TEXT
       )
     ''');
 

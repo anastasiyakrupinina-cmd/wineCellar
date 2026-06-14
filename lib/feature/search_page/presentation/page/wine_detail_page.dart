@@ -247,7 +247,7 @@ class _WineDetailPageState extends State<WineDetailPage> {
 
     final res = await showDialog<Map<String, dynamic>>(
       context: context,
-      builder: (ctx) => StorageLocationDialog(wine: wine.copyWith(quantity: picked.quantity)),
+      builder: (ctx) => StorageLocationDialog(wine: wine.copyWith(quantity: picked.quantity), bottleSize: picked.bottleSize),
     );
     if (res != null && context.mounted) {
       final loc = res['location'] as String;
@@ -724,20 +724,84 @@ class _WineDetailPageState extends State<WineDetailPage> {
           IconButton(
             icon: const Icon(Icons.remove, color: AppColors.darkBlue),
             onPressed: () async {
-              if (bottle.quantity <= 1) {
+              final cubit = context.read<MainCubit>();
+              final spots = await cubit.getOccupiedSpots(wine.id);
+              if (!context.mounted) return;
+
+              final sizeSpots = spots.where((s) => s.bottleSize == bottle.bottleSize).toList();
+              final unassignedForSize = bottle.quantity - sizeSpots.length;
+
+              Map<String, dynamic>? result;
+              if (sizeSpots.isEmpty) {
+                // All bottles of this size are unassigned — simple confirm.
                 final confirmed = await _confirmRemoveSize(context, bottle.bottleSize);
                 if (!confirmed || !context.mounted) return;
-                final newBottles = bottles.where((b) => b.id != bottle.id).toList();
-                if (newBottles.isEmpty) {
-                  await context.read<MainCubit>().deleteWine(wine.id);
+                result = {'removedCount': 1};
+              } else if (unassignedForSize > 0) {
+                // Mix of storage and unassigned — let user choose.
+                final removeFromUnassigned = await showDialog<bool>(
+                  context: context,
+                  builder: (ctx) => AlertDialog(
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                    title: Text('Remove ${bottle.bottleSize}'),
+                    content: const Text('Where would you like to remove the bottle from?'),
+                    actions: [
+                      TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
+                      TextButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Unassigned')),
+                      TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('From Storage')),
+                    ],
+                  ),
+                );
+                if (removeFromUnassigned == null || !context.mounted) return;
+                if (removeFromUnassigned) {
+                  final count = await showDialog<int>(
+                    context: context,
+                    builder: (ctx) => _RemoveUnassignedDialog(max: unassignedForSize),
+                  );
+                  if (count == null || !context.mounted) return;
+                  result = {'removedCount': count};
                 } else {
-                  await context.read<MainCubit>().updateBottleSizes(wine, newBottles);
+                  result = await showDialog<Map<String, dynamic>>(
+                    context: context,
+                    builder: (ctx) => StorageLocationDialog(
+                      wine: wine,
+                      removeMode: true,
+                      maxRemovable: bottle.quantity,
+                      bottleSize: bottle.bottleSize,
+                    ),
+                  );
                 }
               } else {
-                final newBottles = bottles
-                    .map((b) => b.id == bottle.id ? b.copyWith(quantity: b.quantity - 1) : b)
+                // All bottles of this size are in storage — go straight to spot picker.
+                result = await showDialog<Map<String, dynamic>>(
+                  context: context,
+                  builder: (ctx) => StorageLocationDialog(
+                    wine: wine,
+                    removeMode: true,
+                    maxRemovable: bottle.quantity,
+                    bottleSize: bottle.bottleSize,
+                  ),
+                );
+              }
+
+              if (result == null || !context.mounted) return;
+              final removedCount = result['removedCount'] as int? ?? 0;
+              if (removedCount <= 0) return;
+
+              final newBottleQty = bottle.quantity - removedCount;
+              final List<WineBottle> newBottles;
+              if (newBottleQty <= 0) {
+                newBottles = bottles.where((b) => b.id != bottle.id).toList();
+              } else {
+                newBottles = bottles
+                    .map((b) => b.id == bottle.id ? b.copyWith(quantity: newBottleQty) : b)
                     .toList();
-                await context.read<MainCubit>().updateBottleSizes(wine, newBottles);
+              }
+
+              if (newBottles.isEmpty) {
+                await cubit.deleteWine(wine.id);
+              } else {
+                await cubit.updateBottleSizes(wine, newBottles, skipPositionUpdate: true);
               }
             },
           ),
@@ -752,7 +816,7 @@ class _WineDetailPageState extends State<WineDetailPage> {
               if (addQty == null || addQty <= 0 || !context.mounted) return;
               final res = await showDialog<Map<String, dynamic>>(
                 context: context,
-                builder: (ctx) => StorageLocationDialog(wine: wine.copyWith(quantity: wine.quantity + addQty)),
+                builder: (ctx) => StorageLocationDialog(wine: wine.copyWith(quantity: wine.quantity + addQty), bottleSize: bottle.bottleSize, lockInitialSpots: true, maxNewSpots: addQty),
               );
               if (res == null || !context.mounted) return;
               final newBottles = bottles
@@ -795,7 +859,7 @@ class _WineDetailPageState extends State<WineDetailPage> {
 
     final res = await showDialog<Map<String, dynamic>>(
       context: context,
-      builder: (ctx) => StorageLocationDialog(wine: wine.copyWith(quantity: wine.quantity + result.quantity)),
+      builder: (ctx) => StorageLocationDialog(wine: wine.copyWith(quantity: wine.quantity + result.quantity), bottleSize: result.bottleSize, lockInitialSpots: true, maxNewSpots: result.quantity),
     );
     if (res == null || !context.mounted) return;
 
@@ -822,6 +886,18 @@ class _WineDetailPageState extends State<WineDetailPage> {
     final hasLocation = wine.cellarLocation?.isNotEmpty == true;
 
     final allLocations = hasLocation ? wine.cellarLocation!.split(' ; ') : ['No location set'];
+
+    int assignedCount = 0;
+    if (hasLocation) {
+      for (final seg in allLocations) {
+        if (seg.trim() == 'Unassigned') continue;
+        final spotPart = seg.split(' > ').last.trim();
+        if (spotPart.startsWith('Spot ')) {
+          assignedCount += spotPart.replaceFirst('Spot ', '').split(',').length;
+        }
+      }
+    }
+    final unassignedCount = wine.quantity - assignedCount;
 
     const List<IconData> hierarchyIcons = [
       Icons.door_sliding_outlined,
@@ -936,7 +1012,9 @@ class _WineDetailPageState extends State<WineDetailPage> {
                                           const SizedBox(width: 6),
                                           Flexible(
                                             child: Text(
-                                              parts[partIndex].trim(),
+                                              parts[partIndex].trim() == 'Unassigned'
+                                                  ? 'Unassigned × $unassignedCount'
+                                                  : parts[partIndex].trim(),
                                               style: AppTextStyles.caption.copyWith(
                                                 color: isLast ? AppColors.baseWhite : AppColors.darkBlue,
                                                 fontWeight: isLast ? FontWeight.w700 : FontWeight.w600,
@@ -1169,6 +1247,53 @@ class _AddQuantityDialogState extends State<_AddQuantityDialog> {
 }
 
 
+
+class _RemoveUnassignedDialog extends StatefulWidget {
+  final int max;
+  const _RemoveUnassignedDialog({required this.max});
+
+  @override
+  State<_RemoveUnassignedDialog> createState() => _RemoveUnassignedDialogState();
+}
+
+class _RemoveUnassignedDialogState extends State<_RemoveUnassignedDialog> {
+  int _quantity = 1;
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+      title: const Text('How many to remove?'),
+      content: Container(
+        decoration: BoxDecoration(
+          color: AppColors.lightBlue.withValues(alpha: 0.1),
+          borderRadius: BorderRadius.circular(16),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            IconButton(
+              icon: const Icon(Icons.remove, color: AppColors.darkBlue),
+              onPressed: () { if (_quantity > 1) setState(() => _quantity--); },
+            ),
+            Text('$_quantity', style: AppTextStyles.h2.copyWith(fontSize: 18)),
+            IconButton(
+              icon: const Icon(Icons.add, color: AppColors.darkBlue),
+              onPressed: () { if (_quantity < widget.max) setState(() => _quantity++); },
+            ),
+          ],
+        ),
+      ),
+      actions: [
+        TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
+        TextButton(
+          onPressed: () => Navigator.pop(context, _quantity),
+          child: const Text('Remove', style: TextStyle(fontWeight: FontWeight.bold)),
+        ),
+      ],
+    );
+  }
+}
 
 class _AddSizeDialog extends StatefulWidget {
   final Set<String> existingSizes;
@@ -2000,8 +2125,21 @@ class _ScoreTile extends StatelessWidget {
 
 class StorageLocationDialog extends StatefulWidget {
   final WineModel wine;
+  final bool removeMode;
+  final int? maxRemovable;
+  final String? bottleSize;
+  final bool lockInitialSpots;
+  final int? maxNewSpots;
 
-  const StorageLocationDialog({super.key, required this.wine});
+  const StorageLocationDialog({
+    super.key,
+    required this.wine,
+    this.removeMode = false,
+    this.maxRemovable,
+    this.bottleSize,
+    this.lockInitialSpots = false,
+    this.maxNewSpots,
+  });
 
   @override
   State<StorageLocationDialog> createState() => _StorageLocationDialogState();
@@ -2040,20 +2178,42 @@ class _StorageLocationDialogState extends State<StorageLocationDialog> {
           for (var shelf in cab.shelves) {
             for (var pos in shelf.positions) {
               if (pos.wineId == widget.wine.id) {
-                _selectedCabinet ??= cab;
-                _selectedShelf ??= shelf;
-                _selectedSpotIds.add(pos.id);
-                _initialSelectedSpotIds.add(pos.id);
+                // In remove mode, only pre-select spots that match the target bottle size.
+                final sizeMatches = !widget.removeMode ||
+                    widget.bottleSize == null ||
+                    pos.bottleSize == widget.bottleSize;
+                if (sizeMatches) {
+                  _selectedCabinet ??= cab;
+                  _selectedShelf ??= shelf;
+                  _selectedSpotIds.add(pos.id);
+                  _initialSelectedSpotIds.add(pos.id);
+                }
               }
             }
           }
         }
 
-        _restoreSelectedSpotsFromWineLocation();
+        if (!widget.removeMode) {
+          _restoreSelectedSpotsFromWineLocation();
+        }
         _initialSelectedSpotIds.addAll(_selectedSpotIds);
 
         if (_selectedCabinet == null && (widget.wine.cellarLocation?.contains('Unassigned') ?? false)) {
           _selectedCabinet = _unassignedCabinet;
+        }
+
+        // In add mode, if no spots are tagged for the current bottle size
+        // (new size or all bottles unassigned), clear any auto-selected cabinet
+        // so the user sees the blank "Select Storage" prompt first.
+        if (widget.lockInitialSpots && widget.bottleSize != null) {
+          final hasSpotsForThisSize = _cabinets.any((cab) =>
+              cab.shelves.any((shelf) =>
+                  shelf.positions.any((pos) =>
+                      pos.wineId == widget.wine.id && pos.bottleSize == widget.bottleSize)));
+          if (!hasSpotsForThisSize) {
+            _selectedCabinet = null;
+            _selectedShelf = null;
+          }
         }
       });
     }
@@ -2102,8 +2262,12 @@ class _StorageLocationDialogState extends State<StorageLocationDialog> {
   }
 
   Future<void> _saveLocation() async {
+    if (widget.removeMode) {
+      await _saveLocationRemoveMode();
+      return;
+    }
+
     // Ensure the wine is in cellar_wines before positions reference it.
-    // For existing cellar wines this is a no-op (INSERT IGNORE + UPDATE same values).
     await getIt<MainRepository>().saveWine(widget.wine);
     if (!mounted) return;
 
@@ -2151,11 +2315,14 @@ class _StorageLocationDialogState extends State<StorageLocationDialog> {
             shelfSpotIndexes.add(pos.index);
             if (!isCurrentlySelected) {
               shelfNeedsUpdate = true;
-              return BottlePositionModel(id: pos.id, index: pos.index, wineId: widget.wine.id);
+              return BottlePositionModel(
+                id: pos.id, index: pos.index,
+                wineId: widget.wine.id, bottleSize: widget.bottleSize,
+              );
             }
           } else if (isCurrentlySelected) {
             shelfNeedsUpdate = true;
-            return BottlePositionModel(id: pos.id, index: pos.index, wineId: null);
+            return BottlePositionModel(id: pos.id, index: pos.index, wineId: null, bottleSize: null);
           }
           return pos;
         }).toList();
@@ -2186,9 +2353,66 @@ class _StorageLocationDialogState extends State<StorageLocationDialog> {
           ? (locationParts.isEmpty ? 'Unassigned' : '${locationParts.join(' ; ')} ; Unassigned')
           : locationParts.join(' ; ');
 
-      final newQuantity = totalQuantity;
-      Navigator.pop(context, {'location': newLocationString, 'quantity': newQuantity});
+      Navigator.pop(context, {'location': newLocationString, 'quantity': totalQuantity});
     }
+  }
+
+  Future<void> _saveLocationRemoveMode() async {
+    final removedSpots = _initialSelectedSpotIds.difference(_selectedSpotIds);
+    final removedCount = removedSpots.length;
+
+    if (removedCount == 0) {
+      Navigator.pop(context);
+      return;
+    }
+
+    final confirmed = await _confirmLocationChange(removedCount: removedCount, addedCount: 0);
+    if (!confirmed || !mounted) return;
+
+    setState(() => _isLoading = true);
+
+    final totalQuantity = widget.wine.quantity;
+    final newQuantity = totalQuantity - removedCount;
+    final repo = getIt<ProfileRepository>();
+    final List<String> locationParts = [];
+
+    for (var cab in _cabinets) {
+      bool cabinetNeedsUpdate = false;
+      final updatedShelves = cab.shelves.map((shelf) {
+        bool shelfNeedsUpdate = false;
+        final shelfSpotIndexes = <int>[];
+        final updatedPositions = shelf.positions.map((pos) {
+          final shouldBeSelected = _selectedSpotIds.contains(pos.id);
+          final wasPreSelected = _initialSelectedSpotIds.contains(pos.id);
+          if (shouldBeSelected) {
+            shelfSpotIndexes.add(pos.index);
+          } else if (wasPreSelected) {
+            // Only free spots that were pre-selected for this size and the user unticked.
+            // Spots for other sizes (not pre-selected) are left untouched.
+            shelfNeedsUpdate = true;
+            return BottlePositionModel(id: pos.id, index: pos.index, wineId: null, bottleSize: null);
+          }
+          return pos;
+        }).toList();
+        if (shelfSpotIndexes.isNotEmpty) {
+          shelfSpotIndexes.sort();
+          locationParts.add('${cab.name} > ${shelf.name} > Spot ${shelfSpotIndexes.join(', ')}');
+        }
+        if (shelfNeedsUpdate) cabinetNeedsUpdate = true;
+        return ShelfModel(id: shelf.id, name: shelf.name, positions: updatedPositions);
+      }).toList();
+      if (cabinetNeedsUpdate) {
+        await repo.saveCabinet(CabinetModel(id: cab.id, name: cab.name, shelves: updatedShelves));
+      }
+    }
+
+    if (!mounted) return;
+    if (_selectedSpotIds.length < newQuantity) locationParts.add('Unassigned');
+    Navigator.pop(context, {
+      'location': locationParts.join(' ; '),
+      'quantity': newQuantity,
+      'removedCount': removedCount,
+    });
   }
 
   Future<bool> _confirmLocationChange({
@@ -2198,16 +2422,21 @@ class _StorageLocationDialogState extends State<StorageLocationDialog> {
     final int affectedCount = removedCount > 0 ? removedCount : addedCount;
     final bottleWord = affectedCount == 1 ? 'bottle' : 'bottles';
 
-    final bool removeOnly = removedCount > 0 && addedCount == 0;
-    final message = removeOnly
-        ? 'The selected $bottleWord will be moved to Unassigned.'
-        : 'The selected $bottleWord location will be updated.';
+    final String message;
+    if (widget.removeMode) {
+      message = '$affectedCount $bottleWord will be permanently removed from your cellar.';
+    } else {
+      final bool removeOnly = removedCount > 0 && addedCount == 0;
+      message = removeOnly
+          ? 'The selected $bottleWord will be moved to Unassigned.'
+          : 'The selected $bottleWord location will be updated.';
+    }
 
     final result = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: const Text('Confirm location change'),
+        title: Text(widget.removeMode ? 'Remove bottles?' : 'Confirm location change'),
         content: Text(message),
         actions: [
           TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancel')),
@@ -2253,9 +2482,14 @@ class _StorageLocationDialogState extends State<StorageLocationDialog> {
       );
     }
 
+    final effectiveMax = widget.maxRemovable ?? widget.wine.quantity;
+    final removedSoFar = widget.removeMode
+        ? _initialSelectedSpotIds.difference(_selectedSpotIds).length
+        : 0;
+
     return AlertDialog(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-      title: const Text('Select Location'),
+      title: Text(widget.removeMode ? 'Remove from Storage' : 'Select Location'),
       content: SingleChildScrollView(
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -2269,7 +2503,8 @@ class _StorageLocationDialogState extends State<StorageLocationDialog> {
                 contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               ),
               items: [
-                DropdownMenuItem(value: _unassignedCabinet, child: const Text('Unassigned')),
+                if (!widget.removeMode)
+                  DropdownMenuItem(value: _unassignedCabinet, child: const Text('Unassigned')),
                 ..._cabinets.map((c) => DropdownMenuItem(value: c, child: Text(c.name))),
               ],
               onChanged: (val) => setState(() {
@@ -2280,7 +2515,7 @@ class _StorageLocationDialogState extends State<StorageLocationDialog> {
               }),
             ),
             const SizedBox(height: 16),
-            if (_selectedCabinet?.id == _unassignedCabinetId)
+            if (!widget.removeMode && _selectedCabinet?.id == _unassignedCabinetId)
               Text(
                 'All selected bottles will be saved to Unassigned.',
                 style: AppTextStyles.caption.copyWith(color: AppColors.textSecondary),
@@ -2307,9 +2542,11 @@ class _StorageLocationDialogState extends State<StorageLocationDialog> {
               const Text('No shelves in this storage.', style: TextStyle(color: AppColors.error)),
             if (_selectedShelf != null) ...[
               const SizedBox(height: 16),
-              const Text(
-                'Select Spots (Tap to select multiple)',
-                style: TextStyle(fontWeight: FontWeight.bold),
+              Text(
+                widget.removeMode
+                    ? 'Tap a spot to remove a bottle'
+                    : 'Select spot(s)',
+                style: const TextStyle(fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 12),
               Wrap(
@@ -2317,13 +2554,44 @@ class _StorageLocationDialogState extends State<StorageLocationDialog> {
                 runSpacing: 8,
                 children: _selectedShelf!.positions.map((pos) {
                   final isSelected = _selectedSpotIds.contains(pos.id);
-                  final isOccupied = pos.wineId != null && pos.wineId != widget.wine.id;
-                  final reachedLimit =
-                      !isSelected && _selectedSpotIds.length >= widget.wine.quantity;
-                  final isDisabled = isOccupied || reachedLimit;
+                  final bool isDisabled;
+                  if (widget.removeMode) {
+                    final isOwnedByThisWine = _initialSelectedSpotIds.contains(pos.id);
+                  
+                    final atLimit = isSelected && removedSoFar >= effectiveMax;
+                    isDisabled = !isOwnedByThisWine || atLimit;
+                  } else {
+                    final isOccupied = pos.wineId != null && pos.wineId != widget.wine.id;
+                    final maxAllowed = widget.maxNewSpots != null
+                        ? _initialSelectedSpotIds.length + widget.maxNewSpots!
+                        : widget.wine.quantity;
+                    final reachedLimit = !isSelected && _selectedSpotIds.length >= maxAllowed;
+                    isDisabled = isOccupied || reachedLimit;
+                  }
+
+                 
+                  final isLocked = widget.lockInitialSpots && _initialSelectedSpotIds.contains(pos.id);
+                  // Spot belongs to this wine but a different size — show as grey.
+                  final isOtherSize = widget.lockInitialSpots &&
+                      widget.bottleSize != null &&
+                      pos.wineId == widget.wine.id &&
+                      pos.bottleSize != widget.bottleSize;
+
+                  final Color tileColor;
+                  if (isDisabled) {
+                    tileColor = Colors.grey.shade300;
+                  } else if (isLocked) {
+                    tileColor = AppColors.darkBlue;
+                  } else if (widget.removeMode && !isSelected) {
+                    tileColor = Colors.redAccent.withValues(alpha: 0.15);
+                  } else if (isSelected) {
+                    tileColor = AppColors.darkBlue;
+                  } else {
+                    tileColor = AppColors.lightBlue.withValues(alpha: 0.1);
+                  }
 
                   return GestureDetector(
-                    onTap: isDisabled
+                    onTap: (isDisabled || isLocked)
                         ? null
                         : () {
                             setState(() {
@@ -2338,11 +2606,13 @@ class _StorageLocationDialogState extends State<StorageLocationDialog> {
                       width: 40,
                       height: 40,
                       decoration: BoxDecoration(
-                        color: isDisabled
-                            ? Colors.grey.shade300
-                            : (isSelected ? AppColors.darkBlue : AppColors.lightBlue.withValues(alpha: 0.1)),
+                        color: tileColor,
                         borderRadius: BorderRadius.circular(8),
-                        border: Border.all(color: isSelected ? AppColors.darkBlue : Colors.transparent),
+                        border: Border.all(
+                          color: (widget.removeMode && !isSelected && !isDisabled)
+                                  ? Colors.redAccent
+                                  : (isSelected && !isOtherSize ? AppColors.darkBlue : Colors.transparent),
+                        ),
                       ),
                       child: Center(
                         child: Text(
@@ -2361,7 +2631,11 @@ class _StorageLocationDialogState extends State<StorageLocationDialog> {
               ),
               const SizedBox(height: 10),
               Text(
-                'Selected: ${_selectedSpotIds.length}/${widget.wine.quantity}',
+                widget.removeMode
+                    ? 'Removing: $removedSoFar'
+                    : widget.lockInitialSpots && widget.maxNewSpots != null
+                        ? 'Selected: ${_selectedSpotIds.difference(_initialSelectedSpotIds).length}/${widget.maxNewSpots}'
+                        : 'Selected: ${_selectedSpotIds.length}/${widget.wine.quantity}',
                 style: AppTextStyles.caption.copyWith(color: AppColors.textSecondary),
               ),
             ],
@@ -2372,7 +2646,10 @@ class _StorageLocationDialogState extends State<StorageLocationDialog> {
         TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
         TextButton(
           onPressed: _saveLocation,
-          child: const Text('Save', style: TextStyle(fontWeight: FontWeight.bold)),
+          child: Text(
+            widget.removeMode ? 'Remove' : 'Save',
+            style: const TextStyle(fontWeight: FontWeight.bold),
+          ),
         ),
       ],
     );

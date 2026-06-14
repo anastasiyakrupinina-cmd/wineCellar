@@ -1,18 +1,6 @@
 # WineCellar App — Setup Guide for Windows 11
 
-This guide will walk you through every step to run the WineCellar app on your Windows 11 computer — both as a Windows desktop app and on an Android phone simulator. No prior IT knowledge is required. Just follow each step in order.
-
-1. Скачать гит
-1. Скачали по ссылке проект Zip.
-Скачать флаттер как в синтуркции, ссылку поменять
-2. Скачать Visual Studio Code
-3. Cкачать Android Studio (More Actions -> Virtual Device Manager). Также  Settings, в поиске Android SDK: три галочки
-Android SDK Command-line Tools (latest)
-Android SDK Platform-Tools
-Android SDK Build-Tools
-3. Открыть проект в  Visual Studio 
-4.
-5. Открыть терминал в Visual Studio 
+Guide to run the WineCellar app both as a Windows desktop app and on an Android phone simulator.
 
 ---
 
@@ -31,8 +19,6 @@ Total download size: approximately **10–15 GB**. Make sure you have enough fre
 
 ## Part 1 — Install Git
 
-Git is a tool that lets you download ("clone") the project code.
-
 2. Go to: **https://git-scm.com/download/win**
 3. Download and install Git
 
@@ -40,12 +26,10 @@ Git is a tool that lets you download ("clone") the project code.
 
 ## Part 2 — Install Flutter SDK
 
-Flutter is the framework that builds the app.
-
 ### Step 2a — Download Flutter
 
-1. Go to: **https://docs.flutter.dev/get-started/install/windows/desktop**
-2. Under the section **"Download and install"**, click the button that says **"flutter_windows_3.x.x-stable.zip"** (the exact version number does not matter — download the latest).
+1. Go to: **https://docs.flutter.dev/install/manual**
+2. Click the button that says **"flutter_windows_3.x.x-stable.zip"** (the exact version number does not matter, download the latest).
 3. The file will save to your Downloads folder.
 
 ### Step 2b — Extract Flutter
@@ -73,7 +57,7 @@ Flutter is the framework that builds the app.
 
 ### Step 2d — Verify Flutter works
 
-1. Click **Start**, type `cmd`, and press **Enter** to open the Command Prompt (a black window).
+1. Click **Start**, type `cmd`, and press **Enter** to open the Command Prompt.
 2. Type this command and press **Enter**:
    ```
    flutter --version
@@ -84,15 +68,13 @@ Flutter is the framework that builds the app.
 
 ## Part 3 — Install Visual Studio (required for Windows desktop apps)
 
-This is needed to build the app for Windows. Note: this is **Visual Studio**, not **Visual Studio Code** — they are different programs.
-
 1. Go to: **https://visualstudio.microsoft.com/downloads/**
 2. Under **"Community"** (the free version), click **"Free download"**.
 3. Open the installer.
 4. When the installer opens, it will show you a list of "Workloads". Find and check the box for:
    - **"Desktop development with C++"**
 5. Click **"Install"** at the bottom right.
-6. This will take a while (several GB to download). Wait until it finishes.
+6. Wait until it finishes.
 
 ---
 
@@ -100,11 +82,11 @@ This is needed to build the app for Windows. Note: this is **Visual Studio**, no
 
 ### Step 4a — Download and install
 
-1. Go to: **https://developer.android.com/studio**
-2. Click the big **"Download Android Studio"** button.
-3. Accept the terms and click the download button.
-4. Open the installer and click **Next** on every screen without changing anything.
-5. Click **Install**, then **Finish** when done.
+1. Go to: **https://developer.android.com/studio**, download and install Install Android Studio 
+2. During installation, make sure the following components are selected:
+- Android SDK
+- Android SDK Platform
+- Android Virtual Device
 
 ### Step 4b — First-time setup of Android Studio
 
@@ -112,15 +94,20 @@ This is needed to build the app for Windows. Note: this is **Visual Studio**, no
 2. The first time it opens, it will run a **Setup Wizard**. Click **Next**.
 3. Choose **"Standard"** installation type and click **Next**.
 4. Accept all license agreements (click **Accept** for each one that appears, then **Finish**).
-5. It will download some additional files. Wait for it to complete.
+5. It will download some additional files.
 
 ### Step 4c — Create a virtual Android device (phone simulator)
 
-1. Inside Android Studio, look for the option called **"Device Manager"**. It may be in the right sidebar or in the menu under **Tools → Device Manager**.
+1. Inside Android Studio, look for the option called **"Device Manager"**. It may be in the menu under **More Actions → Virtual Device Manager**.
 2. Click **"Create Device"** (or the **+** button).
-3. In the list that appears, select **"Pixel 8"** (or any phone with a "Play Store" icon next to it), then click **Next**.
+3. In the list that appears, select **"Pixel 7"**, then click **Next**.
 4. You will now see a list of Android versions. Find one with **"API 34"** or **"API 35"** in the name and a **download arrow** next to it. Click the arrow to download it first, wait, then click **Next**.
 5. Click **Finish**.
+6. Open Settings and search for **Android SDK** (or Settings → Languages & Frameworks → Android SDK), make sure that these 3 are checked:
+- Android SDK Command-line Tools (latest)
+- Android SDK Platform-Tools
+- Android SDK Build-Tools
+- Android Emulator
 
 You now have a virtual Android phone. You can see it listed in Device Manager.
 
@@ -133,7 +120,7 @@ You now have a virtual Android phone. You can see it listed in Device Manager.
    ```
    cd %USERPROFILE%\Desktop
    ```
-3. Now download the project by running (replace the URL below with the actual repository URL you were given):
+3. Now download the project by running:
    ```
    git clone https://github.com/anastasiyakrupinina-cmd/wineCellar
    ```
@@ -171,7 +158,6 @@ This checks if everything is set up correctly. Look at the output:
 - A red **[✗]** or yellow **[!]** means something is missing.
 
 Common fixes:
-- If it says **"Visual Studio - missing"**: make sure you completed Part 3.
 - If it says **"Android toolchain"** has an issue: run `flutter doctor --android-licenses` and press `y` then **Enter** for each prompt.
 
 Once you see checkmarks for **Flutter**, **Windows (desktop)**, and **Android toolchain**, you are ready.
@@ -185,7 +171,10 @@ Once you see checkmarks for **Flutter**, **Windows (desktop)**, and **Android to
 1. Open **Android Studio**.
 2. Click **"Device Manager"** on the right sidebar.
 3. Find the virtual device you created (e.g., "Pixel 8") and click the green **Play** triangle next to it.
-4. An Android phone will appear on your screen. Wait until it fully boots up (you will see the home screen of the virtual phone).
+4. An Android phone will appear on your screen. Wait until it fully boots up (it may take a while the first time).
+
+If emulator doesn't open and you see an error then try running the app in Android Studio. You can find how at the end of the guide.
+
 
 ### Step 8b — Launch the WineCellar app on the simulator
 
@@ -226,18 +215,12 @@ The WineCellar app uses your **University of Vienna (u:account)** credentials to
 ### "flutter is not recognized"
 You need to add Flutter to PATH. Redo Step 2c, then close and reopen the Command Prompt.
 
-### The Android simulator is very slow
-This is normal on some computers. In Android Studio, go to **Settings → Tools → Emulator** and check **"Launch in a tool window"**. Also make sure your computer has virtualization enabled — ask someone to help you check BIOS settings if the emulator refuses to start.
-
 ### "Unable to locate Android SDK"
 Open Android Studio, go to **Settings → Appearance & Behavior → System Settings → Android SDK**, and note the SDK location path. Then run:
 ```
 flutter config --android-sdk "C:\path\to\sdk"
 ```
 Replace the path with what you found in Android Studio.
-
-### "Missing Visual Studio components"
-Re-open the Visual Studio Installer from the Start menu, find your Visual Studio installation, click **Modify**, and make sure **"Desktop development with C++"** is checked.
 
 ### Build fails with dependency errors
 Run these two commands in order:
@@ -260,5 +243,29 @@ Then try running the app again.
 | Clean build cache | `flutter clean` |
 
 ---
+
+## How to run a flutter project in Android Studio:
+
+
+1. Open Android Studio and go to:
+File → Settings → Plugins
+2. Search for and install:
+- Flutter
+- Dart
+3. Restart Android Studio after installation.
+4. In Android Studio, go to:
+File → Settings → Languages & Frameworks → Flutter
+5. Set the path to your Flutter SDK folder, for example:
+C:\flutter
+6. Open the project folder in Android Studio.
+7. Open the terminal in Android Studio and run:
+```
+flutter pub get
+```
+8. Select the emulator in Android Studio.
+9. Then click the Play button or run:
+flutter run
+
+__
 
 *App name: WineCellar | Built with Flutter*

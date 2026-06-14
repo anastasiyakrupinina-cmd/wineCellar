@@ -317,15 +317,7 @@ class _SearchWineCard extends StatelessWidget {
                                 icon: const Icon(Icons.remove, color: AppColors.darkBlue, size: 20),
                                 padding: EdgeInsets.zero,
                                 constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
-                                onPressed: () async {
-                                  final confirmed = await _confirmQuantityAction(
-                                    context,
-                                    isIncrease: false,
-                                    count: 1,
-                                  );
-                                  if (!confirmed || !context.mounted) return;
-                                  context.read<MainCubit>().updateQuantity(cellarWine!, quantity - 1);
-                                },
+                                onPressed: () => _removeOneBottle(context, cellarWine!),
                               ),
                               Text(
                                 '$quantity',
@@ -346,6 +338,9 @@ class _SearchWineCard extends StatelessWidget {
                                     context: context,
                                     builder: (ctx) => StorageLocationDialog(
                                       wine: w.copyWith(quantity: w.quantity + picked.quantity),
+                                      bottleSize: picked.bottleSize,
+                                      lockInitialSpots: true,
+                                      maxNewSpots: picked.quantity,
                                     ),
                                   );
                                   if (res == null || !context.mounted) return;
@@ -404,7 +399,7 @@ class _SearchWineCard extends StatelessWidget {
 
                           final res = await showDialog<Map<String, dynamic>>(
                             context: context,
-                            builder: (ctx) => StorageLocationDialog(wine: wineToAdd.copyWith(quantity: picked.quantity)),
+                            builder: (ctx) => StorageLocationDialog(wine: wineToAdd.copyWith(quantity: picked.quantity), bottleSize: picked.bottleSize),
                           );
                           if (res != null && context.mounted) {
                             final loc = res['location'] as String;
@@ -446,33 +441,70 @@ class _SearchWineCard extends StatelessWidget {
     );
   }
 
-  Future<bool> _confirmQuantityAction(
-    BuildContext context, {
-    required bool isIncrease,
-    required int count,
-  }) async {
-    final noun = count > 1 ? 'bottles' : 'bottle';
-    final message = isIncrease
-        ? 'This $noun will be added to your collection.'
-        : 'This $noun will be removed from your collection.';
-    final actionText = isIncrease ? 'Add' : 'Remove';
+  Future<void> _removeOneBottle(BuildContext context, WineModel wine) async {
+    final cubit = context.read<MainCubit>();
+    final spots = await cubit.getOccupiedSpots(wine.id);
+    if (!context.mounted) return;
 
-    final result = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: Text(isIncrease ? 'Add bottle?' : 'Remove bottle?'),
-        content: Text(message),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancel')),
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, true),
-            child: Text(actionText, style: const TextStyle(fontWeight: FontWeight.bold)),
-          ),
-        ],
-      ),
-    );
+    Map<String, dynamic>? result;
 
-    return result == true;
+    if (spots.isEmpty) {
+      final confirmed = await showDialog<bool>(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          title: const Text('Remove bottle?'),
+          content: const Text('This bottle will be removed from your cellar.'),
+          actions: [
+            TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancel')),
+            TextButton(
+              onPressed: () => Navigator.pop(ctx, true),
+              child: const Text('Remove', style: TextStyle(fontWeight: FontWeight.bold)),
+            ),
+          ],
+        ),
+      );
+      if (confirmed != true || !context.mounted) return;
+      result = {'removedCount': 1};
+    } else {
+      result = await showDialog<Map<String, dynamic>>(
+        context: context,
+        builder: (ctx) => StorageLocationDialog(wine: wine, removeMode: true),
+      );
+    }
+
+    if (result == null || !context.mounted) return;
+    final removedCount = result['removedCount'] as int? ?? 0;
+    if (removedCount <= 0) return;
+
+    final newQty = wine.quantity - removedCount;
+    if (newQty <= 0) {
+      cubit.deleteWine(wine.id);
+      return;
+    }
+
+    final existing = wine.bottles?.isNotEmpty == true
+        ? List<WineBottle>.from(wine.bottles!)
+        : [WineBottle(id: '${wine.id}_default', wineId: wine.id, bottleSize: '750ml', quantity: wine.quantity)];
+    final sorted = List<WineBottle>.from(existing)
+      ..sort((a, b) => b.quantity.compareTo(a.quantity));
+    final newQtyById = {for (var b in existing) b.id: b.quantity};
+    var remaining = removedCount;
+    for (final b in sorted) {
+      if (remaining <= 0) break;
+      final take = remaining.clamp(0, b.quantity);
+      newQtyById[b.id] = b.quantity - take;
+      remaining -= take;
+    }
+    final newBottles = existing
+        .map((b) => b.copyWith(quantity: newQtyById[b.id]!))
+        .where((b) => b.quantity > 0)
+        .toList();
+
+    if (newBottles.isEmpty) {
+      cubit.deleteWine(wine.id);
+    } else {
+      cubit.updateBottleSizes(wine, newBottles, skipPositionUpdate: true);
+    }
   }
 }

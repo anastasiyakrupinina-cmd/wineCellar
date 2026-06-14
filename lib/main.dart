@@ -12,9 +12,6 @@ import 'package:wine_cellar/core/theme/app_theme.dart';
 import 'package:wine_cellar/feature/archive_page/presentation/cubit/archive_cubit.dart';
 import 'package:wine_cellar/feature/wishlist_page/presentation/cubit/wishlist_cubit.dart';
 
-// Dart on Windows uses BoringSSL's own certificate store instead of the
-// Windows system store, so it cannot verify certificates from CAs that are
-// only trusted system-wide (e.g. the university's CA chain).
 class _TrustAllCertsOverride extends HttpOverrides {
   @override
   HttpClient createHttpClient(SecurityContext? context) =>

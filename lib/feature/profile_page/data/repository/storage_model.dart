@@ -46,18 +46,27 @@ class ShelfModel {
   );
 }
 
+class OccupiedSpot {
+  final String positionId;
+  final String label;
+  final String? bottleSize;
+  OccupiedSpot({required this.positionId, required this.label, this.bottleSize});
+}
+
 class BottlePositionModel {
   final String id;
   final int index;
   final String? wineId;
+  final String? bottleSize;
 
-  BottlePositionModel({required this.id, required this.index, this.wineId});
+  BottlePositionModel({required this.id, required this.index, this.wineId, this.bottleSize});
 
-  Map<String, dynamic> toJson() => {'id': id, 'index': index, 'wineId': wineId};
+  Map<String, dynamic> toJson() => {'id': id, 'index': index, 'wineId': wineId, 'bottleSize': bottleSize};
 
   factory BottlePositionModel.fromJson(Map<String, dynamic> json) => BottlePositionModel(
     id: json['id'] as String,
     index: json['index'] as int? ?? 0,
     wineId: json['wineId'] as String?,
+    bottleSize: json['bottleSize'] as String?,
   );
 }
