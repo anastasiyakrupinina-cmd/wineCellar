@@ -2052,6 +2052,7 @@
 /Users/anastasiya.krupinina/Uni/wine_cellar/lib/core/theme/app_theme.dart
 /Users/anastasiya.krupinina/Uni/wine_cellar/lib/core/validator/validators.dart
 /Users/anastasiya.krupinina/Uni/wine_cellar/lib/core/widget/app_snackbar.dart
+/Users/anastasiya.krupinina/Uni/wine_cellar/lib/core/widget/autocomplete_form_field.dart
 /Users/anastasiya.krupinina/Uni/wine_cellar/lib/core/widget/bottle_wine.dart
 /Users/anastasiya.krupinina/Uni/wine_cellar/lib/core/widget/button.dart
 /Users/anastasiya.krupinina/Uni/wine_cellar/lib/core/widget/text_field.dart
@@ -2068,6 +2069,7 @@
 /Users/anastasiya.krupinina/Uni/wine_cellar/lib/feature/main_page/presentation/cubit/main_cubit.dart
 /Users/anastasiya.krupinina/Uni/wine_cellar/lib/feature/main_page/presentation/cubit/main_state.dart
 /Users/anastasiya.krupinina/Uni/wine_cellar/lib/feature/main_page/presentation/page/main_page.dart
+/Users/anastasiya.krupinina/Uni/wine_cellar/lib/feature/main_page/presentation/widget/add_wine_form.dart
 /Users/anastasiya.krupinina/Uni/wine_cellar/lib/feature/main_page/presentation/widget/app_bar.dart
 /Users/anastasiya.krupinina/Uni/wine_cellar/lib/feature/main_page/presentation/widget/main_list.dart
 /Users/anastasiya.krupinina/Uni/wine_cellar/lib/feature/manage_storage_page/presentation/page/manage_storage.dart
@@ -2080,6 +2082,11 @@
 /Users/anastasiya.krupinina/Uni/wine_cellar/lib/feature/profile_page/presentation/page/profile_page.dart
 /Users/anastasiya.krupinina/Uni/wine_cellar/lib/feature/search_page/presentation/page/search_page.dart
 /Users/anastasiya.krupinina/Uni/wine_cellar/lib/feature/search_page/presentation/page/wine_detail_page.dart
+/Users/anastasiya.krupinina/Uni/wine_cellar/lib/feature/search_page/presentation/widget/add_size_dialog.dart
+/Users/anastasiya.krupinina/Uni/wine_cellar/lib/feature/search_page/presentation/widget/edit_wine_dialog.dart
+/Users/anastasiya.krupinina/Uni/wine_cellar/lib/feature/search_page/presentation/widget/log_purchase_dialog.dart
+/Users/anastasiya.krupinina/Uni/wine_cellar/lib/feature/search_page/presentation/widget/quantity_dialogs.dart
+/Users/anastasiya.krupinina/Uni/wine_cellar/lib/feature/search_page/presentation/widget/wine_detail_tiles.dart
 /Users/anastasiya.krupinina/Uni/wine_cellar/lib/feature/splash_page/splash_page.dart
 /Users/anastasiya.krupinina/Uni/wine_cellar/lib/feature/wine/data/models/catalog_filters.dart
 /Users/anastasiya.krupinina/Uni/wine_cellar/lib/feature/wine/data/models/purchase_record.dart
@@ -2089,6 +2096,8 @@
 /Users/anastasiya.krupinina/Uni/wine_cellar/lib/feature/wine/data/repository/wine_repository.dart
 /Users/anastasiya.krupinina/Uni/wine_cellar/lib/feature/wine/presentation/cubit/wine_search_cubit.dart
 /Users/anastasiya.krupinina/Uni/wine_cellar/lib/feature/wine/presentation/cubit/wine_search_state.dart
+/Users/anastasiya.krupinina/Uni/wine_cellar/lib/feature/wine/presentation/widget/bottle_size_quantity_picker_dialog.dart
+/Users/anastasiya.krupinina/Uni/wine_cellar/lib/feature/wine/presentation/widget/storage_location_dialog.dart
 /Users/anastasiya.krupinina/Uni/wine_cellar/lib/feature/wishlist_page/data/repository/wishlist_repository.dart
 /Users/anastasiya.krupinina/Uni/wine_cellar/lib/feature/wishlist_page/presentation/cubit/wishlist_cubit.dart
 /Users/anastasiya.krupinina/Uni/wine_cellar/lib/feature/wishlist_page/presentation/cubit/wishlist_state.dart
