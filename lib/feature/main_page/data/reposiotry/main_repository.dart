@@ -58,7 +58,7 @@ class MainRepositoryImpl implements MainRepository {
         }
       }
     });
-    _syncService.syncOnClose();
+    _syncService.syncAfterWrite();
   }
 
   Future<void> _upsertAllWines(DatabaseExecutor db, WineModel wine) async {
@@ -191,7 +191,7 @@ class MainRepositoryImpl implements MainRepository {
     await db.rawUpdate('UPDATE positions SET wine_id = NULL WHERE wine_id = ?', [wineId]);
     await db.delete('cellar_wines', where: 'wine_id = ?', whereArgs: [wineId]);
 
-    _syncService.syncOnClose();
+    _syncService.syncAfterWrite();
   }
 
   @override
@@ -221,14 +221,14 @@ class MainRepositoryImpl implements MainRepository {
         conflictAlgorithm: ConflictAlgorithm.ignore,
       );
     }
-    _syncService.syncOnClose();
+    _syncService.syncAfterWrite();
   }
 
   @override
   Future<void> deletePurchaseRecord(String recordId) async {
     _assertInitialized();
     await _databaseService.db.delete('purchase_history', where: 'id = ?', whereArgs: [recordId]);
-    _syncService.syncOnClose();
+    _syncService.syncAfterWrite();
   }
 
   WineModel _rowToWineModel(Map<String, dynamic> row, [String? cellarLocation, List<WineBottle>? bottles]) {

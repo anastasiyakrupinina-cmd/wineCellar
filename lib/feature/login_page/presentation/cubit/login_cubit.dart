@@ -16,13 +16,27 @@ class LoginCubit extends Cubit<LoginState> {
       final isValid = await _syncService.validateCredentials(username, password);
       if (isValid) {
         await _syncService.saveCredentials(username, password);
-        await _syncService.syncOnStart();
-        emit(LoginSuccess());
+        final outcome = await _syncService.syncOnStart();
+        if (outcome == SyncOutcome.conflict) {
+          emit(LoginSyncConflict());
+        } else {
+          emit(LoginSuccess());
+        }
       } else {
         emit(LoginFailure('Invalid u:cloud credentials. Use your university email and password.'));
       }
     } catch (e) {
       emit(LoginFailure('Connection error: ${e.toString()}'));
     }
+  }
+
+  Future<void> resolveConflict({required bool keepLocal}) async {
+    emit(LoginLoading());
+    if (keepLocal) {
+      await _syncService.uploadDb();
+    } else {
+      await _syncService.resolveWithRemote();
+    }
+    emit(LoginSuccess());
   }
 }

@@ -244,8 +244,9 @@ Then try running the app again.
 
 ---
 
-## How to run a flutter project in Android Studio:
+# Alternative ways to open the application: 
 
+## How to run a flutter project in Android Studio:
 
 1. Open Android Studio and go to:
 File → Settings → Plugins
@@ -265,6 +266,10 @@ flutter pub get
 8. Select the emulator in Android Studio.
 9. Then click the Play button or run:
 flutter run
+
+## How to open the app on your Android phone:
+
+1. Download apk file to your phone, open it and install.
 
 __
 

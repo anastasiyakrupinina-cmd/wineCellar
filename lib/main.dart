@@ -54,7 +54,7 @@ class _MyAppState extends State<MyApp> {
     final sync = getIt<UCloudSyncService>();
     final hasCreds = await sync.hasCredentials();
     if (hasCreds) {
-      await sync.syncOnClose();
+      await sync.syncAfterWrite();
     }
   }
 

@@ -42,6 +42,35 @@ class _LoginPageState extends State<LoginPage> with SingleTickerProviderStateMix
     super.dispose();
   }
 
+  void _showConflictDialog(BuildContext context) {
+    showDialog<void>(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => AlertDialog(
+        title: const Text('Sync conflict'),
+        content: const Text(
+          'You have local changes that were not uploaded, but uCloud also has newer data. Which version do you want to keep?',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.of(context).pop();
+              context.read<LoginCubit>().resolveConflict(keepLocal: false);
+            },
+            child: const Text('Keep uCloud'),
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.of(context).pop();
+              context.read<LoginCubit>().resolveConflict(keepLocal: true);
+            },
+            child: const Text('Keep mine'),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final bool isDesktop = MediaQuery.of(context).size.width > 600;
@@ -52,6 +81,8 @@ class _LoginPageState extends State<LoginPage> with SingleTickerProviderStateMix
         listener: (context, state) {
           if (state is LoginSuccess) {
             context.router.replaceAll([const DashboardRoute()]);
+          } else if (state is LoginSyncConflict) {
+            _showConflictDialog(context);
           } else if (state is LoginFailure) {
             AppSnackBar.show(context, message: state.message, isError: true);
           }

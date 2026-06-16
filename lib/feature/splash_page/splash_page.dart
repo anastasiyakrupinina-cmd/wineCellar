@@ -5,7 +5,7 @@ import 'package:wine_cellar/core/database/database_service.dart';
 import 'package:wine_cellar/core/dependencies/get_it.dart';
 import 'package:wine_cellar/core/router/app_router.dart';
 import 'package:wine_cellar/core/style/app_text_style.dart';
-import 'package:wine_cellar/core/sync/ucloud_sync_service.dart';
+import 'package:wine_cellar/core/sync/ucloud_sync_service.dart' show UCloudSyncService, SyncOutcome;
 import 'package:wine_cellar/feature/login_page/presentation/widget/line.dart';
 import 'package:wine_cellar/feature/wishlist_page/presentation/cubit/wishlist_cubit.dart';
 
@@ -35,12 +35,46 @@ class _SplashPageState extends State<SplashPage> with SingleTickerProviderStateM
     if (hasCreds) {
       await getIt<DatabaseService>().init();
       await getIt<WishlistCubit>().load();
-      await getIt<UCloudSyncService>().syncOnStart();
+      final outcome = await getIt<UCloudSyncService>().syncOnStart();
       if (!mounted) return;
+      if (outcome == SyncOutcome.conflict) {
+        final keepLocal = await _showConflictDialog();
+        if (!mounted) return;
+        if (keepLocal) {
+          await getIt<UCloudSyncService>().uploadDb();
+        } else {
+          await getIt<UCloudSyncService>().resolveWithRemote();
+        }
+        if (!mounted) return;
+      }
       context.router.replace(const DashboardRoute());
     } else {
       context.router.replace(const LoginRoute());
     }
+  }
+
+  Future<bool> _showConflictDialog() async {
+    final result = await showDialog<bool>(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => AlertDialog(
+        title: const Text('Sync conflict'),
+        content: const Text(
+          'You have local changes that were not uploaded, but uCloud also has newer data. Which version do you want to keep?',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('Keep uCloud'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            child: const Text('Keep mine'),
+          ),
+        ],
+      ),
+    );
+    return result ?? true;
   }
 
   @override

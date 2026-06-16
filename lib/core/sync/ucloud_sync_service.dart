@@ -8,10 +8,14 @@ import 'package:wine_cellar/core/database/database_service.dart';
 import 'package:injectable/injectable.dart';
 import 'package:webdav_client/webdav_client.dart' as webdav;
 
+enum SyncOutcome { synced, conflict }
+
 @lazySingleton
 class UCloudSyncService {
   static const String _usernameKey = 'ucloud_username';
   static const String _passwordKey = 'ucloud_password';
+  static const String _hasUnsyncedChangesKey = 'has_unsynced_changes';
+  static const String _localLastWriteTimeKey = 'local_last_write_time';
 
   static const String _webDavHost =
       'https://ucloud.univie.ac.at/remote.php/dav/files/';
@@ -24,8 +28,7 @@ class UCloudSyncService {
   static const int _connectTimeoutMs = 10000; // 10 s
   static const int _receiveTimeoutMs = 30000; // 30 s
 
-  // macOS: Keychain requires a valid Apple Developer Team ID; ad-hoc signing doesn't provide one.
-  // All other platforms (Android, iOS, Windows) use flutter_secure_storage natively.
+  
   static bool get _useSecureStorage => !Platform.isMacOS;
 
   final FlutterSecureStorage _secureStorage = const FlutterSecureStorage();
@@ -34,6 +37,22 @@ class UCloudSyncService {
   bool _isUploading = false;
 
   UCloudSyncService(this._databaseService);
+
+  Future<void> markDirty() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(_hasUnsyncedChangesKey, true);
+    await prefs.setInt(_localLastWriteTimeKey, DateTime.now().millisecondsSinceEpoch);
+  }
+
+  Future<void> _clearDirty() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(_hasUnsyncedChangesKey, false);
+  }
+
+  Future<bool> _hasUnsyncedChanges() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getBool(_hasUnsyncedChangesKey) ?? false;
+  }
 
   Future<bool> hasCredentials() async {
     if (_useSecureStorage) {
@@ -59,7 +78,7 @@ class UCloudSyncService {
     }
   }
 
-  /// Returns the stored username (university email).
+  
   Future<String?> getCurrentUsername() async {
     if (_useSecureStorage) {
       return _secureStorage.read(key: _usernameKey);
@@ -94,7 +113,7 @@ class UCloudSyncService {
       await testClient.readDir('/');
       return true;
     } on DioException catch (e) {
-      // 401/403 = wrong credentials; anything else = network/SSL problem → rethrow
+      // 401/403 = wrong credentials; anything else = network/SSL problem rethrow
       if (e.response?.statusCode == 401 || e.response?.statusCode == 403) {
         return false;
       }
@@ -171,6 +190,7 @@ class UCloudSyncService {
 
       final bytes = await localFile.readAsBytes();
       await client.write(_remoteFile, bytes);
+      await _clearDirty();
     } catch (_) {
       // Upload failure is silent — will retry on next sync
     } finally {
@@ -179,33 +199,67 @@ class UCloudSyncService {
   }
 
   /// Called on app start (both first login and returning user).
-  /// Resolves the DB path, downloads the remote file if it exists, then opens the DB.
-  Future<void> syncOnStart() async {
-    // init() resolves _dbPath (idempotent if already open).
-    // Without this, downloadDb() throws StateError on first login after a
-    // fresh install because _dbPath is null until init() runs at least once.
+  /// Returns [SyncOutcome.conflict] when local unsynced changes are older than
+  /// the remote file, ask the user which version to keep.
+  Future<SyncOutcome> syncOnStart() async {
     await _databaseService.init();
-    // close() flushes the DB and releases the file lock so downloadDb() can
-    // safely overwrite it on disk.
+
+    if (await _hasUnsyncedChanges()) {
+      final remoteModified = await _getRemoteLastModified();
+      final prefs = await SharedPreferences.getInstance();
+      final localMs = prefs.getInt(_localLastWriteTimeKey);
+      final localModified = localMs != null
+          ? DateTime.fromMillisecondsSinceEpoch(localMs)
+          : null;
+
+      if (remoteModified != null &&
+          localModified != null &&
+          remoteModified.isAfter(localModified)) {
+        return SyncOutcome.conflict;
+      }
+
+      await uploadDb();
+      return SyncOutcome.synced;
+    }
+
     await _databaseService.close();
     try {
       final client = await _getClient();
       if (client != null) {
         try {
           await client.mkdir(_remoteDir);
-        } catch (_) {
-          // Directory may already exist — ignore
-        }
+        } catch (_) {}
       }
-    } catch (_) {
-      // Network unavailable — proceed to download attempt anyway
-    }
-    await downloadDb(); // 404 or network error → silent skip, local file untouched
+    } catch (_) {}
+    await downloadDb();
+    await _databaseService.init();
+    return SyncOutcome.synced;
+  }
+
+  /// Downloads the remote file and reopens the DB, discarding any local unsynced changes.
+  Future<void> resolveWithRemote() async {
+    await _clearDirty();
+    await _databaseService.close();
+    await downloadDb();
     await _databaseService.init();
   }
 
-  /// Called when the app goes to background or becomes inactive.
-  Future<void> syncOnClose() async {
+  Future<DateTime?> _getRemoteLastModified() async {
+    try {
+      final client = await _getClient();
+      if (client == null) return null;
+      final files = await client.readDir(_remoteDir);
+      for (final f in files) {
+        if (f.name == 'winecellar.db') return f.mTime;
+      }
+    } catch (_) {}
+    return null;
+  }
+
+  
+  Future<void> syncAfterWrite() async {
+    await markDirty();
     await uploadDb();
   }
+
 }

@@ -65,7 +65,7 @@ class ProfileRepositoryImpl implements ProfileRepository {
         }
       }
     });
-    _syncService.syncOnClose();
+    _syncService.syncAfterWrite();
   }
 
 
@@ -140,7 +140,7 @@ class ProfileRepositoryImpl implements ProfileRepository {
     await _databaseService.db.delete(
       'cabinets', where: 'id = ?', whereArgs: [cabinetId],
     );
-    _syncService.syncOnClose();
+    _syncService.syncAfterWrite();
   }
 
   @override
