@@ -269,7 +269,8 @@ flutter run
 
 ## How to open the app on your Android phone:
 
-1. Download apk file to your phone, open it and install.
+1. Download apk file to your phone, open it and install. Debug APKs can be installed on any device with Unknown sources/Install from unknown apps enabled in Android settings.
+Tip: it can be opened from WhatsApp (or other messangers) or installed via USB.
 
 __
 

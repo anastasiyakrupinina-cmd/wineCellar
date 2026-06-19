@@ -25,7 +25,7 @@ class UCloudSyncService {
   static String _buildWebDavBase(String username) =>
       '$_webDavHost${Uri.encodeComponent(username)}/';
 
-  static const int _connectTimeoutMs = 10000; // 10 s
+  static const int _connectTimeoutMs = 30000; // 30 s
   static const int _receiveTimeoutMs = 30000; // 30 s
 
   
