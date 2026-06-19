@@ -4,6 +4,7 @@ import 'package:injectable/injectable.dart';
 
 abstract class SearchRepository {
   Future<CatalogFilters> getFilterOptions();
+  Future<CatalogFilters> getCatalogFilterOptions();
   Future<List<String>> getShopOptions();
 }
 
@@ -17,6 +18,33 @@ class SearchRepositoryImpl implements SearchRepository {
   Future<List<String>> getShopOptions() async {
     final rows = await _db.db.query('shops', orderBy: 'name ASC');
     return rows.map((r) => r['name'] as String).toList();
+  }
+
+  @override
+  Future<CatalogFilters> getCatalogFilterOptions() async {
+    final db = _db.db;
+    final names = (await db.rawQuery(
+      'SELECT DISTINCT name FROM all_wines ORDER BY name ASC',
+    )).map((r) => r['name'] as String).toList();
+    final wineries = (await db.query('wineries', orderBy: 'name ASC'))
+        .map((r) => r['name'] as String)
+        .toList();
+    final types = (await db.query('wine_types', orderBy: 'name ASC'))
+        .map((r) => r['name'] as String)
+        .toList();
+    final countries = (await db.query('countries', orderBy: 'name ASC'))
+        .map((r) => r['name'] as String)
+        .toList();
+    final grapes = (await db.query('grapes', orderBy: 'name ASC'))
+        .map((r) => r['name'] as String)
+        .toList();
+    return CatalogFilters(
+      names: names,
+      wineries: wineries,
+      types: types,
+      countries: countries,
+      grapes: grapes,
+    );
   }
 
   @override

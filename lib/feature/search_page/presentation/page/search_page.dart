@@ -14,8 +14,10 @@ import 'package:wine_cellar/feature/main_page/presentation/cubit/main_cubit.dart
 import 'package:wine_cellar/feature/main_page/presentation/cubit/main_state.dart';
 import 'package:wine_cellar/feature/wine/presentation/widget/bottle_size_quantity_picker_dialog.dart';
 import 'package:wine_cellar/feature/wine/presentation/widget/storage_location_dialog.dart';
+import 'package:wine_cellar/feature/wine/data/models/catalog_filters.dart';
 import 'package:wine_cellar/feature/wine/data/models/wine_bottle.dart';
 import 'package:wine_cellar/feature/wine/data/models/wine_model.dart';
+import 'package:wine_cellar/feature/wine/data/repository/search_repository.dart';
 import 'package:wine_cellar/feature/wine/data/repository/wine_repository.dart';
 import 'package:wine_cellar/feature/wine/presentation/cubit/wine_search_cubit.dart';
 import 'package:wine_cellar/feature/wine/presentation/cubit/wine_search_state.dart';
@@ -35,6 +37,7 @@ class _SearchPageState extends State<SearchPage> {
   late final WineSearchCubit _searchCubit;
   Timer? _debounce;
   final ScrollController _scrollController = ScrollController();
+  CatalogFilters _filterOptions = const CatalogFilters();
 
   @override
   void initState() {
@@ -43,6 +46,62 @@ class _SearchPageState extends State<SearchPage> {
     _searchCubit.searchWines();
     _searchController.addListener(_onSearchChanged);
     _scrollController.addListener(_onScroll);
+    _loadFilterOptions();
+  }
+
+  Future<void> _loadFilterOptions() async {
+    try {
+      final options = await getIt<SearchRepository>().getCatalogFilterOptions();
+      if (mounted) setState(() => _filterOptions = options);
+    } catch (_) {}
+  }
+
+  List<String> _computeSuggestions() {
+    final text = _searchController.text;
+    if (text.isEmpty) return [];
+    final q = text.toLowerCase();
+    final seen = <String>{};
+    return _filterOptions.allOptions.where((opt) {
+      final lower = opt.toLowerCase();
+      return lower.contains(q) && lower != q && seen.add(opt);
+    }).take(8).toList();
+  }
+
+  Widget _buildSuggestions(List<String> suggestions) {
+    return Material(
+      elevation: 6,
+      borderRadius: BorderRadius.circular(16),
+      color: Colors.white,
+      child: ListView.builder(
+        padding: const EdgeInsets.symmetric(vertical: 8),
+        shrinkWrap: true,
+        physics: const NeverScrollableScrollPhysics(),
+        itemCount: suggestions.length,
+        itemBuilder: (context, index) {
+          final option = suggestions[index];
+          return InkWell(
+            onTap: () {
+              _searchController.text = option;
+              FocusManager.instance.primaryFocus?.unfocus();
+              _searchCubit.searchWines(query: option);
+            },
+            borderRadius: BorderRadius.circular(8),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              child: Row(
+                children: [
+                  const Icon(Icons.search_rounded, size: 18, color: AppColors.textSecondary),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(option, style: AppTextStyles.body.copyWith(fontSize: 14)),
+                  ),
+                ],
+              ),
+            ),
+          );
+        },
+      ),
+    );
   }
 
   void _onSearchChanged() {
@@ -74,6 +133,7 @@ class _SearchPageState extends State<SearchPage> {
     final double screenWidth = MediaQuery.of(context).size.width;
     final int crossAxisCount = screenWidth > 1200 ? 4 : (screenWidth > 800 ? 3 : 2);
     final bool isDesktop = screenWidth > 600;
+    final suggestions = _computeSuggestions();
 
     return MultiBlocProvider(
       providers: [
@@ -90,29 +150,31 @@ class _SearchPageState extends State<SearchPage> {
             title: Text('Catalog', style: AppTextStyles.h1),
             centerTitle: !isDesktop,
           ),
-          body: Column(
+          body: Stack(
             children: [
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 16.0),
-                child: Center(
-                  child: Container(
-                    constraints: const BoxConstraints(maxWidth: 800),
-                    child: AppTextField(
-                      hint: 'Name, winery, region, country, type',
-                      controller: _searchController,
-                      prefixIcon: Icons.search,
-                      suffixIcon: _searchController.text.isNotEmpty ? Icons.close_rounded : null,
-                      onSuffixTap: () {
-                        _searchController.clear();
-                        FocusScope.of(context).unfocus();
-                        _searchCubit.searchWines(query: '');
-                      },
+              Column(
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 16.0),
+                    child: Center(
+                      child: Container(
+                        constraints: const BoxConstraints(maxWidth: 800),
+                        child: AppTextField(
+                          hint: 'Name, winery, region, country, type',
+                          controller: _searchController,
+                          prefixIcon: Icons.search,
+                          suffixIcon: _searchController.text.isNotEmpty ? Icons.close_rounded : null,
+                          onSuffixTap: () {
+                            _searchController.clear();
+                            FocusScope.of(context).unfocus();
+                            _searchCubit.searchWines(query: '');
+                          },
+                        ),
+                      ),
                     ),
                   ),
-                ),
-              ),
-              Expanded(
-                child: BlocConsumer<WineSearchCubit, WineSearchState>(
+                  Expanded(
+                    child: BlocConsumer<WineSearchCubit, WineSearchState>(
                   listener: (context, state) {
                     if (state is WineSearchError) {
                       AppSnackBar.show(context, message: state.message, isError: true);
@@ -162,9 +224,23 @@ class _SearchPageState extends State<SearchPage> {
               ),
             ],
           ),
-        ),
+          if (suggestions.isNotEmpty)
+            Positioned(
+              top: 76,
+              left: 24,
+              right: 24,
+              child: Center(
+                child: Container(
+                  constraints: const BoxConstraints(maxWidth: 800),
+                  child: _buildSuggestions(suggestions),
+                ),
+              ),
+            ),
+        ],
       ),
-    );
+    ),
+  ),
+);
   }
 }
 
