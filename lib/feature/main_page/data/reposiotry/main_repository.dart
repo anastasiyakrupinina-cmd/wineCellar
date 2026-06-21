@@ -79,11 +79,11 @@ class MainRepositoryImpl implements MainRepository {
           : null,
       'pairings': wine.foodPairings != null
           ? jsonEncode(wine.foodPairings!.map((f) => {'food': f}).toList())
-          : null,
+          : wine.rawPairingsJson,
       'grapes': wine.grapes != null ? jsonEncode(wine.grapes) : null,
       'scores': wine.scores != null
           ? jsonEncode(wine.scores!.map((s) => s.toJson()).toList())
-          : null,
+          : wine.rawScoresJson,
     };
     await db.insert('all_wines', map, conflictAlgorithm: ConflictAlgorithm.ignore);
     await db.update('all_wines', map, where: 'id = ?', whereArgs: [wine.id]);
@@ -248,9 +248,13 @@ class MainRepositoryImpl implements MainRepository {
       'cellarLocation': cellarLocation,
       'notice': row['notice'],
       'prices': row['prices'] != null ? jsonDecode(row['prices'] as String) : null,
-      'pairings': row['pairings'] != null ? jsonDecode(row['pairings'] as String) : null,
+      'pairings': null,
       'grapes': row['grapes'] != null ? jsonDecode(row['grapes'] as String) : null,
-      'scores': row['scores'] != null ? jsonDecode(row['scores'] as String) : null,
-    }).copyWith(bottles: bottles);
+      'scores': null,
+    }).copyWith(
+      rawPairingsJson: row['pairings'] as String?,
+      rawScoresJson: row['scores'] as String?,
+      bottles: bottles,
+    );
   }
 }

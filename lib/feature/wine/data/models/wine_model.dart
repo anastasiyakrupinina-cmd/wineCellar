@@ -28,6 +28,10 @@ class WineModel {
 
   final List<WineBottle>? bottles;
 
+  // Raw JSON strings kept for lazy decoding — null when model came from the API path.
+  final String? rawPairingsJson;
+  final String? rawScoresJson;
+
   WineModel({
     required this.id,
     required this.name,
@@ -48,6 +52,8 @@ class WineModel {
     this.cellarLocation,
     this.notice,
     this.bottles,
+    this.rawPairingsJson,
+    this.rawScoresJson,
   });
 
   factory WineModel.fromJson(Map<String, dynamic> json) {
@@ -208,6 +214,8 @@ class WineModel {
     String? cellarLocation,
     String? notice,
     List<WineBottle>? bottles,
+    String? rawPairingsJson,
+    String? rawScoresJson,
   }) {
     return WineModel(
       id: id ?? this.id,
@@ -229,6 +237,8 @@ class WineModel {
       cellarLocation: cellarLocation ?? this.cellarLocation,
       notice: notice ?? this.notice,
       bottles: bottles ?? this.bottles,
+      rawPairingsJson: rawPairingsJson ?? this.rawPairingsJson,
+      rawScoresJson: rawScoresJson ?? this.rawScoresJson,
     );
   }
 }

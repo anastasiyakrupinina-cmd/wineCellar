@@ -18,27 +18,11 @@ class MainCubit extends Cubit<MainState> {
   Future<void> loadWines() async {
     if (isClosed) return;
 
-
     try {
-      final localWines = await _repository.getLocalWines();
-      if (localWines.isNotEmpty) {
-        if (!isClosed) emit(MainLoaded(localWines));
-      } else {
-        if (!isClosed) emit(MainLoading());
-      }
+      final wines = await _repository.getLocalWines();
+      if (!isClosed) emit(wines.isNotEmpty ? MainLoaded(wines) : MainLoading());
     } catch (e) {
-      if (!isClosed) emit(MainLoading());
-    }
-
-
-    try {
-      final remoteWines = await _repository.getRemoteWines();
-      if (!isClosed) emit(MainLoaded(remoteWines));
-    } catch (e) {
-
-      if (state is! MainLoaded && !isClosed) {
-        emit(MainError(e.toString()));
-      }
+      if (!isClosed) emit(MainError(e.toString()));
     }
   }
 

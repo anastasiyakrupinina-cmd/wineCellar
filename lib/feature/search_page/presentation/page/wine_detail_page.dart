@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:auto_route/auto_route.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -391,7 +393,28 @@ class _WineDetailPageState extends State<WineDetailPage> {
     );
   }
 
+  static List<String>? _parsePairings(String? raw) {
+    if (raw == null) return null;
+    final list = jsonDecode(raw);
+    if (list is! List) return null;
+    return list.map((e) {
+      if (e is Map) return e['food']?.toString() ?? '';
+      return e.toString();
+    }).where((s) => s.isNotEmpty).toList();
+  }
+
+  static List<WineScore>? _parseScores(String? raw) {
+    if (raw == null) return null;
+    final list = jsonDecode(raw);
+    if (list is! List) return null;
+    return list
+        .map((e) => WineScore.fromJson(Map<String, dynamic>.from(e)))
+        .toList();
+  }
+
   Widget _buildDetailedContent(WineModel wine, bool isLoading) {
+    final pairings = wine.foodPairings ?? _parsePairings(wine.rawPairingsJson);
+    final scores = wine.scores ?? _parseScores(wine.rawScoresJson);
     final sections = <Widget>[];
 
     if (wine.description?.isNotEmpty == true) {
@@ -418,11 +441,11 @@ class _WineDetailPageState extends State<WineDetailPage> {
       ]));
     }
 
-    if (wine.scores?.isNotEmpty == true) {
+    if (scores?.isNotEmpty == true) {
       sections.add(Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         Text('Scores', style: AppTextStyles.h2),
         const SizedBox(height: 12),
-        ...wine.scores!.map((s) => ScoreTile(score: s)),
+        ...scores!.map((s) => ScoreTile(score: s)),
       ]));
     }
 
@@ -451,13 +474,13 @@ class _WineDetailPageState extends State<WineDetailPage> {
       ]));
     }
 
-    if (wine.foodPairings?.isNotEmpty == true) {
+    if (pairings?.isNotEmpty == true) {
       sections.add(Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         Text('Perfect pairing with:', style: AppTextStyles.h2),
         const SizedBox(height: 16),
         Wrap(
           spacing: 10, runSpacing: 10,
-          children: wine.foodPairings!.map((food) => _buildFoodChip(food)).toList(),
+          children: pairings!.map((food) => _buildFoodChip(food)).toList(),
         ),
       ]));
     }

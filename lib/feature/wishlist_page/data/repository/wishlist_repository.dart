@@ -109,12 +109,16 @@ class WishlistRepositoryImpl implements WishlistRepository {
     final db = _db.db;
     await db.delete('wishlist', where: 'wine_id = ?', whereArgs: [wineId]);
 
-    // Only remove from all_wines if not in the cellar
+    // Only remove from all_wines if not referenced by cellar or archive
     final inCellar = await db.query(
       'cellar_wines', columns: ['wine_id'],
       where: 'wine_id = ?', whereArgs: [wineId], limit: 1,
     );
-    if (inCellar.isEmpty) {
+    final inArchive = await db.query(
+      'archive', columns: ['wine_id'],
+      where: 'wine_id = ?', whereArgs: [wineId], limit: 1,
+    );
+    if (inCellar.isEmpty && inArchive.isEmpty) {
       await db.delete('all_wines', where: 'id = ?', whereArgs: [wineId]);
     }
   }
