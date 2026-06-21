@@ -18,7 +18,7 @@ Wine Cellar is a cross-platform mobile and desktop application that lets you cat
 - **Wishlist** — save wines you want to acquire
 - **Archive** — keep a record of wines you have finished
 - **Purchase history** — log when and where bottles were bought
-- **u:cloud sync** — automatic backup and sync via WebDAV using your University of Vienna (u:account) credentials; data is uploaded when the app goes to the background and downloaded on the next launch
+- **u:cloud sync** — automatic backup and sync via WebDAV using your University of Vienna (u:account) credentials
 
 ---
 
