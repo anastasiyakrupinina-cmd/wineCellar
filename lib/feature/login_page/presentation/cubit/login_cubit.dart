@@ -16,6 +16,7 @@ class LoginCubit extends Cubit<LoginState> {
       final isValid = await _syncService.validateCredentials(username, password);
       if (isValid) {
         await _syncService.saveCredentials(username, password);
+        await _syncService.clearDirty();
         final outcome = await _syncService.syncOnStart();
         if (outcome == SyncOutcome.conflict) {
           emit(LoginSyncConflict());

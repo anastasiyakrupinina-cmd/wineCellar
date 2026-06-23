@@ -49,6 +49,8 @@ class UCloudSyncService {
     await prefs.setBool(_hasUnsyncedChangesKey, false);
   }
 
+  Future<void> clearDirty() => _clearDirty();
+
   Future<bool> _hasUnsyncedChanges() async {
     final prefs = await SharedPreferences.getInstance();
     return prefs.getBool(_hasUnsyncedChangesKey) ?? false;

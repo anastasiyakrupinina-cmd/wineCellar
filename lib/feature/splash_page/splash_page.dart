@@ -29,26 +29,31 @@ class _SplashPageState extends State<SplashPage> with SingleTickerProviderStateM
   }
 
   Future<void> _checkAuth() async {
-    final hasCreds = await getIt<UCloudSyncService>().hasCredentials();
-    if (!mounted) return;
-
-    if (hasCreds) {
-      await getIt<DatabaseService>().init();
-      await getIt<WishlistCubit>().load();
-      final outcome = await getIt<UCloudSyncService>().syncOnStart();
+    try {
+      final hasCreds = await getIt<UCloudSyncService>().hasCredentials();
       if (!mounted) return;
-      if (outcome == SyncOutcome.conflict) {
-        final keepLocal = await _showConflictDialog();
+
+      if (hasCreds) {
+        await getIt<DatabaseService>().init();
+        await getIt<WishlistCubit>().load();
+        final outcome = await getIt<UCloudSyncService>().syncOnStart();
         if (!mounted) return;
-        if (keepLocal) {
-          await getIt<UCloudSyncService>().uploadDb();
-        } else {
-          await getIt<UCloudSyncService>().resolveWithRemote();
+        if (outcome == SyncOutcome.conflict) {
+          final keepLocal = await _showConflictDialog();
+          if (!mounted) return;
+          if (keepLocal) {
+            await getIt<UCloudSyncService>().uploadDb();
+          } else {
+            await getIt<UCloudSyncService>().resolveWithRemote();
+          }
+          if (!mounted) return;
         }
-        if (!mounted) return;
+        context.router.replace(const DashboardRoute());
+      } else {
+        context.router.replace(const LoginRoute());
       }
-      context.router.replace(const DashboardRoute());
-    } else {
+    } catch (_) {
+      if (!mounted) return;
       context.router.replace(const LoginRoute());
     }
   }
