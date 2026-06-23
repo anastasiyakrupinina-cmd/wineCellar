@@ -47,7 +47,7 @@ Wine Cellar is a cross-platform mobile and desktop application that lets you cat
 
 ## Getting Started
 
-- [SETUP_GUIDE.md](SETUP_GUIDE.md) — Windows 11 (Android simulator + Windows desktop)
+- [SETUP_GUIDE.md](SETUP_GUIDE_ANDROID_WIN.md) — Windows 11 (Android simulator + Windows desktop)
 - [SETUP_GUIDE_MACOS.md](SETUP_GUIDE_MACOS.md) — macOS (iOS simulator + macOS desktop)
 
 ### Login

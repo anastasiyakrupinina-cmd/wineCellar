@@ -21,11 +21,11 @@ class WineRepositoryImpl implements WineRepository {
         '/wines/search',
         queryParameters: {'q': query, 'limit': limit, 'offset': offset},
       );
-      log('Ответ от API: ${response.data}');
+      log('API response: ${response.data}');
       final List results = response.data['results'] ?? [];
       return results.map((json) => WineModel.fromJson(json)).toList();
     } catch (e) {
-      throw Exception('Ошибка поиска: $e');
+      throw Exception('Search error: $e');
     }
   }
 
@@ -33,10 +33,10 @@ class WineRepositoryImpl implements WineRepository {
   Future<WineModel> getWineDetails(String id) async {
     try {
       final response = await _dio.get('/wines/$id');
-      log('Детали вина (ID: $id): ${response.data}');
+      log('Wine details (ID: $id): ${response.data}');
       return WineModel.fromJson(response.data);
     } catch (e) {
-      throw Exception('Ошибка загрузки деталей: $e');
+      throw Exception('Wine details loading error: $e');
     }
   }
 }
