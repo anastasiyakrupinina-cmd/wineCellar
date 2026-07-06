@@ -54,7 +54,7 @@ Wine Cellar is a cross-platform mobile and desktop application that lets you cat
 
 The app uses your University of Vienna **u:account** credentials:
 
-- **Username**: your university email (e.g. `a12345678@unet.univie.ac.at`)
+- **Username**: your university email (e.g. `a12345678@univie.ac.at`)
 - **Password**: your ucloud app password — generate it at [ucloud.univie.ac.at](https://ucloud.univie.ac.at) under Settings → Security → Devices & Sessions
 
 ---

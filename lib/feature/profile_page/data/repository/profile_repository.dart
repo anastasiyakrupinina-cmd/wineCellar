@@ -1,4 +1,5 @@
 import 'package:wine_cellar/core/database/database_service.dart';
+import 'package:wine_cellar/core/storage/storage_service.dart';
 import 'package:wine_cellar/core/sync/ucloud_sync_service.dart';
 import 'package:wine_cellar/feature/profile_page/data/repository/storage_model.dart';
 import 'package:injectable/injectable.dart';
@@ -24,8 +25,9 @@ abstract class ProfileRepository {
 class ProfileRepositoryImpl implements ProfileRepository {
   final DatabaseService _databaseService;
   final UCloudSyncService _syncService;
+  final StorageService _storageService;
 
-  ProfileRepositoryImpl(this._databaseService, this._syncService);
+  ProfileRepositoryImpl(this._databaseService, this._syncService, this._storageService);
 
   void _assertInitialized() {
     if (!_databaseService.isInitialized) {
@@ -34,7 +36,10 @@ class ProfileRepositoryImpl implements ProfileRepository {
   }
 
   @override
-  Future<void> signOut() async => _syncService.signOut();
+  Future<void> signOut() async {
+    await _syncService.signOut();
+    await _storageService.saveBool(StorageService.localOnlyModeKey, false);
+  }
 
   @override
   Future<String?> getCurrentUsername() async => _syncService.getCurrentUsername();

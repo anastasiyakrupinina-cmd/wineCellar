@@ -1,8 +1,10 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:injectable/injectable.dart';
 import 'package:wine_cellar/feature/wine/data/models/wine_model.dart';
 import 'package:wine_cellar/feature/wishlist_page/data/repository/wishlist_repository.dart';
 import 'package:wine_cellar/feature/wishlist_page/presentation/cubit/wishlist_state.dart';
 
+@lazySingleton
 class WishlistCubit extends Cubit<WishlistState> {
   final WishlistRepository _repository;
 

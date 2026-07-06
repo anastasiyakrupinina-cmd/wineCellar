@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:wine_cellar/core/database/database_service.dart';
 import 'package:wine_cellar/feature/wine/data/models/wine_model.dart';
+import 'package:injectable/injectable.dart';
 import 'package:sqflite/sqflite.dart';
 
 class ArchivedWine {
@@ -17,6 +18,7 @@ abstract class ArchiveRepository {
   Future<void> permanentlyDelete(String wineId);
 }
 
+@Injectable(as: ArchiveRepository)
 class ArchiveRepositoryImpl implements ArchiveRepository {
   final DatabaseService _db;
 

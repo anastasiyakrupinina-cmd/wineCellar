@@ -22,17 +22,21 @@ class DatabaseService {
     return _dbPath!;
   }
 
-  Future<void> init() async {
-    if (_db != null) return;
+  Future<String> _resolveDbPath() async {
     if (Platform.isWindows || Platform.isLinux || Platform.isMacOS) {
       sqfliteFfiInit();
       databaseFactory = databaseFactoryFfi;
       final dir = await getApplicationDocumentsDirectory();
-      _dbPath = p.join(dir.path, 'winecellar.db');
+      return p.join(dir.path, 'winecellar.db');
     } else {
       final dbDir = await getDatabasesPath();
-      _dbPath = p.join(dbDir, 'winecellar.db');
+      return p.join(dbDir, 'winecellar.db');
     }
+  }
+
+  Future<void> init() async {
+    if (_db != null) return;
+    _dbPath = await _resolveDbPath();
 
     _db = await openDatabase(
       _dbPath!,
@@ -48,6 +52,15 @@ class DatabaseService {
     await _db?.close();
     _db = null;
     // _dbPath intentionally preserved so dbPath still works after close()
+  }
+
+  /// Replaces the app's database file with [source] and opens it, discarding
+  /// whatever was previously in the standard db location.
+  Future<void> replaceWithFile(File source) async {
+    await close();
+    final path = await _resolveDbPath();
+    await source.copy(path);
+    await init();
   }
 
   Future<void> _onCreate(Database db, int version) async {

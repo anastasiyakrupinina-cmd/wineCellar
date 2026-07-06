@@ -4,6 +4,7 @@ import 'package:wine_cellar/core/colors/app_colors.dart';
 import 'package:wine_cellar/core/database/database_service.dart';
 import 'package:wine_cellar/core/dependencies/get_it.dart';
 import 'package:wine_cellar/core/router/app_router.dart';
+import 'package:wine_cellar/core/storage/storage_service.dart';
 import 'package:wine_cellar/core/style/app_text_style.dart';
 import 'package:wine_cellar/core/sync/ucloud_sync_service.dart' show UCloudSyncService, SyncOutcome;
 import 'package:wine_cellar/feature/login_page/presentation/widget/line.dart';
@@ -30,6 +31,14 @@ class _SplashPageState extends State<SplashPage> with SingleTickerProviderStateM
 
   Future<void> _checkAuth() async {
     try {
+      if (getIt<StorageService>().getBool(StorageService.localOnlyModeKey)) {
+        await getIt<DatabaseService>().init();
+        await getIt<WishlistCubit>().load();
+        if (!mounted) return;
+        context.router.replace(const DashboardRoute());
+        return;
+      }
+
       final hasCreds = await getIt<UCloudSyncService>().hasCredentials();
       if (!mounted) return;
 

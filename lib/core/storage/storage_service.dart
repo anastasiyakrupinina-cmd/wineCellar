@@ -5,6 +5,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 @lazySingleton
 class StorageService {
+  static const String localOnlyModeKey = 'local_only_mode';
+
   final SharedPreferences _prefs;
 
   StorageService(this._prefs);

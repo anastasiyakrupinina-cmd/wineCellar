@@ -1,7 +1,9 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:injectable/injectable.dart';
 import 'package:wine_cellar/feature/archive_page/data/repository/archive_repository.dart';
 import 'package:wine_cellar/feature/archive_page/presentation/cubit/archive_state.dart';
 
+@lazySingleton
 class ArchiveCubit extends Cubit<ArchiveState> {
   final ArchiveRepository _repository;
 

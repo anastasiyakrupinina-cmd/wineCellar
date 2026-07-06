@@ -1,4 +1,8 @@
+import 'dart:io';
+
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:wine_cellar/core/database/database_service.dart';
+import 'package:wine_cellar/core/storage/storage_service.dart';
 import 'package:wine_cellar/core/sync/ucloud_sync_service.dart';
 import 'package:injectable/injectable.dart';
 
@@ -7,8 +11,21 @@ import 'login_state.dart';
 @injectable
 class LoginCubit extends Cubit<LoginState> {
   final UCloudSyncService _syncService;
+  final DatabaseService _databaseService;
+  final StorageService _storageService;
 
-  LoginCubit(this._syncService) : super(LoginInitial());
+  LoginCubit(this._syncService, this._databaseService, this._storageService) : super(LoginInitial());
+
+  Future<void> openLocalDatabase(File file) async {
+    emit(LoginLoading());
+    try {
+      await _databaseService.replaceWithFile(file);
+      await _storageService.saveBool(StorageService.localOnlyModeKey, true);
+      emit(LoginSuccess());
+    } catch (e) {
+      emit(LoginFailure('Could not open database file: ${e.toString()}'));
+    }
+  }
 
   Future<void> login(String username, String password) async {
     emit(LoginLoading());

@@ -139,30 +139,18 @@ class SplashRoute extends PageRouteInfo<void> {
 }
 
 /// generated route for
-/// [WishlistPage]
-class WishlistRoute extends PageRouteInfo<void> {
-  const WishlistRoute({List<PageRouteInfo>? children})
-    : super(WishlistRoute.name, initialChildren: children);
-
-  static const String name = 'WishlistRoute';
-
-  static PageInfo page = PageInfo(
-    name,
-    builder: (data) {
-      return const WishlistPage();
-    },
-  );
-}
-
-/// generated route for
 /// [WineDetailPage]
 class WineDetailRoute extends PageRouteInfo<WineDetailRouteArgs> {
-  WineDetailRoute({Key? key, WineModel? wine, bool readOnly = false, List<PageRouteInfo>? children})
-    : super(
-        WineDetailRoute.name,
-        args: WineDetailRouteArgs(key: key, wine: wine, readOnly: readOnly),
-        initialChildren: children,
-      );
+  WineDetailRoute({
+    Key? key,
+    WineModel? wine,
+    bool readOnly = false,
+    List<PageRouteInfo>? children,
+  }) : super(
+         WineDetailRoute.name,
+         args: WineDetailRouteArgs(key: key, wine: wine, readOnly: readOnly),
+         initialChildren: children,
+       );
 
   static const String name = 'WineDetailRoute';
 
@@ -172,7 +160,11 @@ class WineDetailRoute extends PageRouteInfo<WineDetailRouteArgs> {
       final args = data.argsAs<WineDetailRouteArgs>(
         orElse: () => const WineDetailRouteArgs(),
       );
-      return WineDetailPage(key: args.key, wine: args.wine, readOnly: args.readOnly);
+      return WineDetailPage(
+        key: args.key,
+        wine: args.wine,
+        readOnly: args.readOnly,
+      );
     },
   );
 }
@@ -200,4 +192,20 @@ class WineDetailRouteArgs {
 
   @override
   int get hashCode => key.hashCode ^ wine.hashCode ^ readOnly.hashCode;
+}
+
+/// generated route for
+/// [WishlistPage]
+class WishlistRoute extends PageRouteInfo<void> {
+  const WishlistRoute({List<PageRouteInfo>? children})
+    : super(WishlistRoute.name, initialChildren: children);
+
+  static const String name = 'WishlistRoute';
+
+  static PageInfo page = PageInfo(
+    name,
+    builder: (data) {
+      return const WishlistPage();
+    },
+  );
 }

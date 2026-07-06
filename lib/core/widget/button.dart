@@ -40,20 +40,27 @@ class AppButton extends StatelessWidget {
                   color: isSecondary ? AppColors.textMain : AppColors.baseWhite,
                 ),
               )
-            : Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  if (icon != null) ...[Icon(icon, size: 20), const SizedBox(width: 10)],
-                  Text(
-                    text,
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                      letterSpacing: 0.5,
-                      color: isSecondary ? AppColors.textMain : AppColors.baseWhite,
+            : Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 12),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    if (icon != null) ...[Icon(icon, size: 20), const SizedBox(width: 10)],
+                    Flexible(
+                      child: Text(
+                        text,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          letterSpacing: 0.5,
+                          color: isSecondary ? AppColors.textMain : AppColors.baseWhite,
+                        ),
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
       ),
     );

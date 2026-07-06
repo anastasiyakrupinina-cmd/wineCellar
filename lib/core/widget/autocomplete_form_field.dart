@@ -75,49 +75,73 @@ class _AutocompleteFormFieldState extends State<AutocompleteFormField> {
     }
   }
 
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _overlayEntry?.markNeedsBuild();
+  }
+
+  double _computeMaxHeight() {
+    final mq = MediaQuery.of(context);
+    final renderBox = context.findRenderObject() as RenderBox?;
+    if (renderBox == null || !renderBox.hasSize) return 280;
+    final textFieldBottom =
+        renderBox.localToGlobal(Offset.zero).dy + renderBox.size.height;
+    final available =
+        mq.size.height - mq.viewInsets.bottom - textFieldBottom - 16;
+    return available.clamp(80.0, 280.0);
+  }
+
   void _showOverlay() {
     if (!mounted) return;
     _overlayEntry = OverlayEntry(
-      builder: (_) => CompositedTransformFollower(
-        link: _layerLink,
-        showWhenUnlinked: false,
-        targetAnchor: Alignment.bottomLeft,
-        followerAnchor: Alignment.topLeft,
-        child: Align(
-          alignment: Alignment.topLeft,
-          child: Material(
-            elevation: 6,
-            borderRadius: BorderRadius.circular(12),
-            color: Colors.white,
-            child: ConstrainedBox(
-              constraints: BoxConstraints(maxWidth: _fieldWidth, maxHeight: 280),
-              child: ListView.builder(
-                padding: const EdgeInsets.symmetric(vertical: 4),
-                shrinkWrap: true,
-                itemCount: _suggestions.length,
-                itemBuilder: (_, i) {
-                  final option = _suggestions[i];
-                  return InkWell(
-                    onTap: () => _selectOption(option),
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 11),
-                      child: Row(
-                        children: [
-                          const Icon(Icons.search_rounded, size: 16, color: AppColors.textSecondary),
-                          const SizedBox(width: 10),
-                          Expanded(
-                            child: Text(option, style: AppTextStyles.body.copyWith(fontSize: 14)),
+      builder: (_) {
+        if (!mounted) return const SizedBox.shrink();
+        final suggestions = List<String>.from(_suggestions);
+        return CompositedTransformFollower(
+          link: _layerLink,
+          showWhenUnlinked: false,
+          targetAnchor: Alignment.bottomLeft,
+          followerAnchor: Alignment.topLeft,
+          child: Align(
+            alignment: Alignment.topLeft,
+            child: Material(
+              elevation: 6,
+              borderRadius: BorderRadius.circular(12),
+              color: Colors.white,
+              child: ConstrainedBox(
+                constraints: BoxConstraints(
+                  maxWidth: _fieldWidth,
+                  maxHeight: _computeMaxHeight(),
+                ),
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.symmetric(vertical: 4),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: suggestions.map((option) {
+                      return InkWell(
+                        onTap: () => _selectOption(option),
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 11),
+                          child: Row(
+                            children: [
+                              const Icon(Icons.search_rounded, size: 16, color: AppColors.textSecondary),
+                              const SizedBox(width: 10),
+                              Expanded(
+                                child: Text(option, style: AppTextStyles.body.copyWith(fontSize: 14)),
+                              ),
+                            ],
                           ),
-                        ],
-                      ),
-                    ),
-                  );
-                },
+                        ),
+                      );
+                    }).toList(),
+                  ),
+                ),
               ),
             ),
           ),
-        ),
-      ),
+        );
+      },
     );
     Overlay.of(context).insert(_overlayEntry!);
   }

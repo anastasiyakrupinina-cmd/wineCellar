@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:wine_cellar/core/database/database_service.dart';
 import 'package:wine_cellar/feature/wine/data/models/wine_model.dart';
+import 'package:injectable/injectable.dart';
 import 'package:sqflite/sqflite.dart';
 
 abstract class WishlistRepository {
@@ -11,6 +12,7 @@ abstract class WishlistRepository {
   Future<bool> isInWishlist(String wineId);
 }
 
+@Injectable(as: WishlistRepository)
 class WishlistRepositoryImpl implements WishlistRepository {
   final DatabaseService _db;
 

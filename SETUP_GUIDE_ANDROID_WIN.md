@@ -204,7 +204,7 @@ This will build and launch the WineCellar app as a regular Windows window on you
 
 The WineCellar app uses your **University of Vienna (u:account)** credentials to log in and sync your data:
 
-- **Username**: your university email address (e.g., `a12345678@unet.univie.ac.at`)
+- **Username**: your university email address (e.g., `a12345678@univie.ac.at`)
 - **Password**: your ucloud app password. Generate it at ucloud.univie.ac.at -> Settings -> Security -> Devices & Sessions
 
 

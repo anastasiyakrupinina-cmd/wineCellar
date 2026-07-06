@@ -1,4 +1,7 @@
+import 'dart:io';
+
 import 'package:auto_route/auto_route.dart';
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:wine_cellar/core/colors/app_colors.dart';
@@ -40,6 +43,16 @@ class _LoginPageState extends State<LoginPage> with SingleTickerProviderStateMix
     _emailController.dispose();
     _passwordController.dispose();
     super.dispose();
+  }
+
+  Future<void> _pickLocalDatabase(BuildContext context) async {
+    final result = await FilePicker.pickFiles(
+      type: FileType.custom,
+      allowedExtensions: ['db'],
+    );
+    final path = result?.files.single.path;
+    if (path == null || !context.mounted) return;
+    context.read<LoginCubit>().openLocalDatabase(File(path));
   }
 
   void _showConflictDialog(BuildContext context) {
@@ -171,6 +184,31 @@ class _LoginPageState extends State<LoginPage> with SingleTickerProviderStateMix
                                         color: AppColors.textSecondary,
                                         fontSize: 12,
                                       ),
+                                    ),
+                                    const SizedBox(height: 24),
+                                    Row(
+                                      children: [
+                                        const Expanded(child: Divider()),
+                                        Padding(
+                                          padding: const EdgeInsets.symmetric(horizontal: 12),
+                                          child: Text(
+                                            'OR',
+                                            style: AppTextStyles.body.copyWith(
+                                              color: AppColors.textSecondary,
+                                              fontSize: 12,
+                                            ),
+                                          ),
+                                        ),
+                                        const Expanded(child: Divider()),
+                                      ],
+                                    ),
+                                    const SizedBox(height: 20),
+                                    AppButton(
+                                      text: 'Open Database File',
+                                      isSecondary: true,
+                                      isLoading: isLoading,
+                                      icon: Icons.folder_open_rounded,
+                                      onPressed: () => _pickLocalDatabase(context),
                                     ),
                                   ],
                                 ),
