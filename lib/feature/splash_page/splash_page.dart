@@ -31,8 +31,9 @@ class _SplashPageState extends State<SplashPage> with SingleTickerProviderStateM
 
   Future<void> _checkAuth() async {
     try {
-      if (getIt<StorageService>().getBool(StorageService.localOnlyModeKey)) {
-        await getIt<DatabaseService>().init();
+      final localDbPath = getIt<StorageService>().getString(StorageService.localDbPathKey);
+      if (localDbPath != null) {
+        await getIt<DatabaseService>().openAtPath(localDbPath);
         await getIt<WishlistCubit>().load();
         if (!mounted) return;
         context.router.replace(const DashboardRoute());

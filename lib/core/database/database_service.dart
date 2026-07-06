@@ -24,8 +24,6 @@ class DatabaseService {
 
   Future<String> _resolveDbPath() async {
     if (Platform.isWindows || Platform.isLinux || Platform.isMacOS) {
-      sqfliteFfiInit();
-      databaseFactory = databaseFactoryFfi;
       final dir = await getApplicationDocumentsDirectory();
       return p.join(dir.path, 'winecellar.db');
     } else {
@@ -34,12 +32,14 @@ class DatabaseService {
     }
   }
 
-  Future<void> init() async {
-    if (_db != null) return;
-    _dbPath = await _resolveDbPath();
-
+  Future<void> _openAt(String path) async {
+    if (Platform.isWindows || Platform.isLinux || Platform.isMacOS) {
+      sqfliteFfiInit();
+      databaseFactory = databaseFactoryFfi;
+    }
+    _dbPath = path;
     _db = await openDatabase(
-      _dbPath!,
+      path,
       version: 10,
       onConfigure: (db) async {
         await db.execute('PRAGMA foreign_keys = ON');
@@ -48,19 +48,22 @@ class DatabaseService {
     );
   }
 
+  Future<void> init() async {
+    if (_db != null) return;
+    await _openAt(await _resolveDbPath());
+  }
+
   Future<void> close() async {
     await _db?.close();
     _db = null;
     // _dbPath intentionally preserved so dbPath still works after close()
   }
 
-  /// Replaces the app's database file with [source] and opens it, discarding
-  /// whatever was previously in the standard db location.
-  Future<void> replaceWithFile(File source) async {
+  /// Opens the database file at [path] directly (in place), closing whatever
+  /// db was previously open. Future reads/writes go straight to this file.
+  Future<void> openAtPath(String path) async {
     await close();
-    final path = await _resolveDbPath();
-    await source.copy(path);
-    await init();
+    await _openAt(path);
   }
 
   Future<void> _onCreate(Database db, int version) async {

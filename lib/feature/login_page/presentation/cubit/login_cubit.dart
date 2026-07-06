@@ -19,8 +19,8 @@ class LoginCubit extends Cubit<LoginState> {
   Future<void> openLocalDatabase(File file) async {
     emit(LoginLoading());
     try {
-      await _databaseService.replaceWithFile(file);
-      await _storageService.saveBool(StorageService.localOnlyModeKey, true);
+      await _databaseService.openAtPath(file.path);
+      await _storageService.saveString(StorageService.localDbPathKey, file.path);
       emit(LoginSuccess());
     } catch (e) {
       emit(LoginFailure('Could not open database file: ${e.toString()}'));

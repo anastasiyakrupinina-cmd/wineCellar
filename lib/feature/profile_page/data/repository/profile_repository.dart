@@ -38,7 +38,7 @@ class ProfileRepositoryImpl implements ProfileRepository {
   @override
   Future<void> signOut() async {
     await _syncService.signOut();
-    await _storageService.saveBool(StorageService.localOnlyModeKey, false);
+    await _storageService.remove(StorageService.localDbPathKey);
   }
 
   @override
