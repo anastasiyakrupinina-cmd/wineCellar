@@ -20,7 +20,7 @@ class MainCubit extends Cubit<MainState> {
 
     try {
       final wines = await _repository.getLocalWines();
-      if (!isClosed) emit(wines.isNotEmpty ? MainLoaded(wines) : MainLoading());
+      if (!isClosed) emit(MainLoaded(wines));
     } catch (e) {
       if (!isClosed) emit(MainError(e.toString()));
     }

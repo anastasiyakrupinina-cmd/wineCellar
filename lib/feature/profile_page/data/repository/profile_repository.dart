@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import 'package:wine_cellar/core/database/database_service.dart';
 import 'package:wine_cellar/core/storage/storage_service.dart';
 import 'package:wine_cellar/core/sync/ucloud_sync_service.dart';
@@ -8,6 +10,8 @@ import 'package:sqflite/sqflite.dart';
 abstract class ProfileRepository {
   Future<void> signOut();
   Future<String?> getCurrentUsername();
+  Future<Uint8List> getDatabaseFileBytes();
+  bool isLocalOnlyMode();
   Future<void> saveCabinet(CabinetModel cabinet);
   Future<List<CabinetModel>> getStorageLocations();
   Future<void> deleteCabinet(String cabinetId);
@@ -40,6 +44,12 @@ class ProfileRepositoryImpl implements ProfileRepository {
     await _syncService.signOut();
     await _storageService.remove(StorageService.localDbPathKey);
   }
+
+  @override
+  Future<Uint8List> getDatabaseFileBytes() => _databaseService.readBytesForExport();
+
+  @override
+  bool isLocalOnlyMode() => _storageService.getString(StorageService.localDbPathKey) != null;
 
   @override
   Future<String?> getCurrentUsername() async => _syncService.getCurrentUsername();

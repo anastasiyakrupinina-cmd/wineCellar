@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:wine_cellar/feature/profile_page/data/repository/profile_repository.dart';
 import 'package:wine_cellar/feature/profile_page/presentation/cubit/profile_state.dart';
@@ -13,6 +15,10 @@ class ProfileCubit extends Cubit<ProfileState> {
     final username = await _repository.getCurrentUsername();
     emit(ProfileLoaded(username ?? ''));
   }
+
+  Future<Uint8List> getDatabaseFileBytes() => _repository.getDatabaseFileBytes();
+
+  bool isLocalOnlyMode() => _repository.isLocalOnlyMode();
 
   Future<void> signOut() async {
     emit(ProfileLoading());

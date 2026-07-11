@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:typed_data';
 
 import 'package:injectable/injectable.dart';
 import 'package:path/path.dart' as p;
@@ -21,6 +22,25 @@ class DatabaseService {
     if (_dbPath == null) throw StateError('DatabaseService not initialized. Call init() first.');
     return _dbPath!;
   }
+
+  /// Reads the current database file's bytes for exporting (share/save-as).
+  /// Checkpoints WAL first so recent writes aren't left behind in the
+  /// sidecar `-wal` file, same as UCloudSyncService.uploadDb() does.
+  Future<Uint8List> readBytesForExport() async {
+    if (_db != null) {
+      await _db!.rawQuery('PRAGMA wal_checkpoint(TRUNCATE)');
+    }
+    return File(dbPath).readAsBytes();
+  }
+
+  /// Desktop OSes hand back a real, writable filesystem path from a file
+  /// picker, so a picked/created file can stay open and be written to
+  /// directly. Android/iOS sandbox file access (SAF / scoped storage): a
+  /// picked file's path is only a cached copy, and there's no way to keep
+  /// writing into a user-chosen save location. So on mobile, local-only mode
+  /// always operates on a copy kept in the app's own permanent storage.
+  static bool get _supportsInPlaceEditing =>
+      Platform.isMacOS || Platform.isWindows || Platform.isLinux;
 
   Future<String> _resolveDbPath() async {
     if (Platform.isWindows || Platform.isLinux || Platform.isMacOS) {
@@ -64,6 +84,36 @@ class DatabaseService {
   Future<void> openAtPath(String path) async {
     await close();
     await _openAt(path);
+  }
+
+  /// Opens [source], a file the user picked, as the local database. Returns
+  /// the path that ends up open, which the caller should persist to reopen
+  /// on the next launch. On desktop this opens [source] in place; on mobile
+  /// its bytes are copied into the app's own permanent storage first (see
+  /// [_supportsInPlaceEditing]).
+  Future<String> openPickedFile(File source) async {
+    if (_supportsInPlaceEditing) {
+      await openAtPath(source.path);
+      return source.path;
+    }
+    final path = await _resolveDbPath();
+    await close();
+    await source.copy(path);
+    await _openAt(path);
+    return path;
+  }
+
+  /// Creates/opens a fresh local database, returning the path that ends up
+  /// open. On desktop this opens directly at [desktopPath] (a location the
+  /// user chose via a save dialog). On mobile there's no way to keep writing
+  /// into a user-chosen save location, so [desktopPath] is ignored and the
+  /// app's own permanent storage is always used instead.
+  Future<String> createLocalDatabase({String? desktopPath}) async {
+    final path = _supportsInPlaceEditing && desktopPath != null
+        ? desktopPath
+        : await _resolveDbPath();
+    await openAtPath(path);
+    return path;
   }
 
   Future<void> _onCreate(Database db, int version) async {

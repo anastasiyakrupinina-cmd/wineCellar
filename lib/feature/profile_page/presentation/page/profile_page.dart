@@ -1,4 +1,7 @@
+import 'dart:io';
+
 import 'package:auto_route/auto_route.dart';
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:wine_cellar/core/colors/app_colors.dart';
@@ -10,9 +13,72 @@ import 'package:wine_cellar/core/widget/button.dart';
 import 'package:wine_cellar/feature/profile_page/presentation/cubit/profile_cubit.dart';
 import 'package:wine_cellar/feature/profile_page/presentation/cubit/profile_state.dart';
 
+enum _SignOutChoice { cancel, signOutOnly, saveAndSignOut }
+
 @RoutePage()
 class ProfilePage extends StatelessWidget {
   const ProfilePage({super.key});
+
+  bool get _isMobile => Platform.isAndroid || Platform.isIOS;
+
+  Future<void> _saveDatabaseAs(BuildContext context) async {
+    try {
+      final bytes = await context.read<ProfileCubit>().getDatabaseFileBytes();
+      if (!context.mounted) return;
+      await FilePicker.saveFile(
+        dialogTitle: 'Save WineCellar database as',
+        fileName: 'winecellar.db',
+        type: FileType.custom,
+        allowedExtensions: ['db'],
+        bytes: bytes,
+      );
+    } catch (e) {
+      if (context.mounted) {
+        AppSnackBar.show(context, message: 'Could not save database: ${e.toString()}', isError: true);
+      }
+    }
+  }
+
+  Future<void> _handleSignOut(BuildContext context) async {
+    final cubit = context.read<ProfileCubit>();
+    final needsSavePrompt = _isMobile && cubit.isLocalOnlyMode();
+
+    if (needsSavePrompt) {
+      final choice = await showDialog<_SignOutChoice>(
+        context: context,
+        barrierDismissible: false,
+        builder: (_) => AlertDialog(
+          title: const Text('Save before signing out?'),
+          content: const Text(
+            'This database file lives inside the app and won\'t be reachable once you sign out. '
+            'Save a copy first if you want to keep your changes.',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(_SignOutChoice.cancel),
+              child: const Text('Cancel'),
+            ),
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(_SignOutChoice.signOutOnly),
+              child: const Text('Sign Out Without Saving'),
+            ),
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(_SignOutChoice.saveAndSignOut),
+              child: const Text('Save & Sign Out'),
+            ),
+          ],
+        ),
+      );
+      if (choice == null || choice == _SignOutChoice.cancel) return;
+      if (choice == _SignOutChoice.saveAndSignOut) {
+        if (!context.mounted) return;
+        await _saveDatabaseAs(context);
+        if (!context.mounted) return;
+      }
+    }
+
+    cubit.signOut();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -67,11 +133,28 @@ class ProfilePage extends StatelessWidget {
                       Text(username, style: AppTextStyles.body.copyWith(color: AppColors.textSecondary)),
                     const SizedBox(height: 48),
                     AppButton(
+                      text: 'Save Database',
+                      isSecondary: true,
+                      icon: Icons.save_alt_rounded,
+                      onPressed: () => _saveDatabaseAs(context),
+                    ),
+                    if (_isMobile) ...[
+                      const SizedBox(height: 12),
+                      Text(
+                        'On Android and iOS, a database file you opened or created without syncing '
+                        'to u:cloud lives inside the app. To access it from another app, save it '
+                        'manually using the button above.',
+                        textAlign: TextAlign.center,
+                        style: AppTextStyles.body.copyWith(color: AppColors.textSecondary, fontSize: 12),
+                      ),
+                    ],
+                    const SizedBox(height: 12),
+                    AppButton(
                       text: 'Sign Out',
                       isSecondary: true,
                       icon: Icons.logout,
                       isLoading: isSigningOut,
-                      onPressed: () => context.read<ProfileCubit>().signOut(),
+                      onPressed: () => _handleSignOut(context),
                     ),
                     const SizedBox(height: 100),
                   ],

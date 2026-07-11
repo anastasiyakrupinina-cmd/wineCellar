@@ -55,6 +55,24 @@ class _LoginPageState extends State<LoginPage> with SingleTickerProviderStateMix
     context.read<LoginCubit>().openLocalDatabase(File(path));
   }
 
+  Future<void> _createLocalDatabase(BuildContext context) async {
+    String? desktopPath;
+    if (Platform.isMacOS || Platform.isWindows || Platform.isLinux) {
+      // Mobile has no way to keep writing into a user-chosen save location
+      // (see DatabaseService.createLocalDatabase), so only ask for a path
+      // on desktop; mobile always uses the app's own storage.
+      desktopPath = await FilePicker.saveFile(
+        dialogTitle: 'Create new WineCellar database',
+        fileName: 'winecellar.db',
+        type: FileType.custom,
+        allowedExtensions: ['db'],
+      );
+      if (desktopPath == null) return;
+    }
+    if (!context.mounted) return;
+    context.read<LoginCubit>().createLocalDatabase(desktopPath: desktopPath);
+  }
+
   void _showConflictDialog(BuildContext context) {
     showDialog<void>(
       context: context,
@@ -209,6 +227,14 @@ class _LoginPageState extends State<LoginPage> with SingleTickerProviderStateMix
                                       isLoading: isLoading,
                                       icon: Icons.folder_open_rounded,
                                       onPressed: () => _pickLocalDatabase(context),
+                                    ),
+                                    const SizedBox(height: 12),
+                                    AppButton(
+                                      text: 'Create New Database',
+                                      isSecondary: true,
+                                      isLoading: isLoading,
+                                      icon: Icons.add_circle_outline_rounded,
+                                      onPressed: () => _createLocalDatabase(context),
                                     ),
                                   ],
                                 ),
